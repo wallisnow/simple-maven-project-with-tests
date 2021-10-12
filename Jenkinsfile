@@ -1,6 +1,6 @@
 node('master') {
     checkout scm
-    stages {
+   
         stage('Build') {
             withMaven(maven: 'M3'){
                 sh "mvn -Dmaven.test.failure.ignore=true clean package"
@@ -12,5 +12,5 @@ node('master') {
                 archiveArtifacts 'target/*.jar'
             }
         }
-    }
+    
 }
