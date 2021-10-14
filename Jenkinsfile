@@ -9,7 +9,7 @@ pipeline {
                 script {
                     FAILED_STAGE=env.STAGE_NAME
                 }
-                sh 'echo "Hello World"'
+                sh 'echo "Hello World 1"'
                 sh '''
                     echo "Multiline shell steps works too"
                     ls -lah
