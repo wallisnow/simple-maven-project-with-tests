@@ -1,6 +1,7 @@
 def FAILED_STAGE
 
-node('master') {
+pipeline {
+    agent {label "master"}
     stages {
         checkout scm
         stage('Build maven') {
