@@ -1,5 +1,5 @@
 pipeline {
-    agent "master"
+    agent {label "master"}
     //checkout scm
     stages {
         stage('Build') {
