@@ -1,15 +1,22 @@
-node('master') {
+pipeline {
+    agent any
     checkout scm
-    stage('Build maven') {
-        withMaven(maven: 'M3') {
-            sh "mvn -Dmaven.test.failure.ignore=true clean package"
+    stages {
+        stage('Build') {
+            steps {
+                sh 'echo "Hello World"'
+                sh '''
+                    echo "Multiline shell steps works too"
+                    ls -lah
+                '''
+                sh "mvn -Dmaven.test.failure.ignore=true clean package"
+            }
         }
-    }
-    stage('Collect test info'){
-        echo currentBuild.result
-    }
-    stage('Result') {
-        junit '**/target/surefire-reports/TEST-*.xml'
-        archiveArtifacts 'target/*.jar'
+        stage('Result') {
+            steps {
+                junit '**/target/surefire-reports/TEST-*.xml'
+                archiveArtifacts 'target/*.jar'
+            }
+        }
     }
 }
