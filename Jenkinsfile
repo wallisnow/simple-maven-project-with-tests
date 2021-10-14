@@ -7,7 +7,7 @@ pipeline {
         stage('Build') {
             steps {
                 script {
-                    FAILED_STAGE=env.STAGE_NAME
+                    FAILED_STAGE = env.STAGE_NAME
                 }
                 sh 'echo "Hello World 1"'
                 sh '''
@@ -15,7 +15,7 @@ pipeline {
                     ls -lah
                 '''
                 //sh "mvn -Dmaven.test.failure.ignore=true clean package"
-                withMaven(maven: 'M3'){
+                withMaven(maven: 'M3') {
                     sh "mvn -Dmaven.test.failure.ignore=true clean package"
                 }
             }
@@ -23,7 +23,7 @@ pipeline {
         stage('Result') {
             steps {
                 script {
-                    FAILED_STAGE=env.STAGE_NAME
+                    FAILED_STAGE = env.STAGE_NAME
                 }
                 junit '**/target/surefire-reports/TEST-*.xml'
                 archiveArtifacts 'target/*.jar'
@@ -31,7 +31,7 @@ pipeline {
         }
     }
     post {
-        failure {
+        always {
             script {
                 echo "Failed stage name: ${FAILED_STAGE}"
             }
