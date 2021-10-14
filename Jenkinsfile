@@ -6,7 +6,9 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                FAILED_STAGE=env.STAGE_NAME
+                script {
+                    FAILED_STAGE=env.STAGE_NAME
+                }
                 sh 'echo "Hello World"'
                 sh '''
                     echo "Multiline shell steps works too"
@@ -20,7 +22,9 @@ pipeline {
         }
         stage('Result') {
             steps {
-                FAILED_STAGE=env.STAGE_NAME
+                script {
+                    FAILED_STAGE=env.STAGE_NAME
+                }
                 junit '**/target/surefire-reports/TEST-*.xml'
                 archiveArtifacts 'target/*.jar'
             }
@@ -28,7 +32,9 @@ pipeline {
     }
     post {
         failure {
-            echo "Failed stage name: ${FAILED_STAGE}"
+            script {
+                echo "Failed stage name: ${FAILED_STAGE}"
+            }
         }
     }
 }
