@@ -46,10 +46,9 @@ pipeline {
             steps {
                 script {
                     sh '''
-                        ls
-                        /bin/sh robot --outputdir robot/reports robot/mytest.robot
-                        ls robot
-                    '''
+                        #!/bin/bash -xe
+                        robot --outputdir robot/reports robot/mytest.robot
+                    '''.stripIndent()
                 }
             }
         }
