@@ -48,6 +48,8 @@ pipeline {
                     sh '''
                         /bin/sh robot robot/mytest.robot --output reports/output.xml -l reports/log.html -r reports/report.html
                         ls
+                        cd robot
+                        ls
                     '''
                 }
             }
