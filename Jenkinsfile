@@ -1,3 +1,5 @@
+import hudson.model.*
+
 def FAILED_STAGE
 
 pipeline {
