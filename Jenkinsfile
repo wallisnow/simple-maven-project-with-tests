@@ -48,6 +48,7 @@ pipeline {
                     sh '''
                         ls
                         /bin/sh robot --outputdir robot/reports robot/mytest.robot
+                        ls robot
                     '''
                 }
             }
