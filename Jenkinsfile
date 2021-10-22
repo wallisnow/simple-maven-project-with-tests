@@ -48,6 +48,7 @@ pipeline {
                     sh '''
                         ls
                         cd robot
+                        ls
                         /bin/sh robot --outputdir reports mytest.robot
                     '''
                 }
