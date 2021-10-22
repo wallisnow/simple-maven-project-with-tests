@@ -37,9 +37,18 @@ pipeline {
                 }
 
                 withEnv(["MY_ENV=bar"]) { // it can override any env variable
-                    echo "MY_ENV = ${env.MY_ENV}" // prints "FOO = foobar"
+                    echo "MY_ENV = ${env.MY_ENV}"
                 }
 
+            }
+        }
+        stage("run robot "){
+            steps{
+                script {
+                    sh '''
+                        ls
+                    '''
+                }
             }
         }
         stage('Result') {
