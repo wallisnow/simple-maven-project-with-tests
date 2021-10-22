@@ -62,23 +62,23 @@ pipeline {
                 archiveArtifacts 'target/*.jar'
             }
         }
-        stage('Robot Result') {
-            steps {
-                script {
-                    step(
-                            [$class           : 'RobotPublisher',
-                             outputPath       : 'robot/reports',
-                             outputFileName   : 'robot/reports/output.xml',
-                             reportFileName   : 'robot/reports/report.html',
-                             logFileName      : 'robot/reports/log.html',
-                             passThreshold    : 100,
-                             unstableThreshold: 0,
-                             onlyCritical     : true,
-                             otherFiles       : "*.log"]
-                    )
-                }
-            }
-        }
+//        stage('Robot Result') {
+//            steps {
+//                script {
+//                    step(
+//                            [$class           : 'RobotPublisher',
+//                             outputPath       : 'robot/reports',
+//                             outputFileName   : 'robot/reports/output.xml',
+//                             reportFileName   : 'robot/reports/report.html',
+//                             logFileName      : 'robot/reports/log.html',
+//                             passThreshold    : 100,
+//                             unstableThreshold: 0,
+//                             onlyCritical     : true,
+//                             otherFiles       : "*.log"]
+//                    )
+//                }
+//            }
+//        }
     }
     post {
         always {
