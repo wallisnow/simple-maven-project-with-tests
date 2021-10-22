@@ -58,7 +58,7 @@ pipeline {
                       export  $(cat /tmp/file.txt)
                       echo $AAA
                       '''.stripIndent()
-                    manager.addShortText("${AAA}", "black", "lightgreen", "0px", "white")
+                    manager.addShortText(env.AAA, "black", "lightgreen", "0px", "white")
                 }
             }
         }
