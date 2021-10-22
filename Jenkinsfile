@@ -52,7 +52,7 @@ pipeline {
 //                        robot --outputdir robot/reports robot/mytest.robot
 //                    '''.stripIndent()
                       sh '''
-                      rm -rf file.txt
+                      rm -rf /tmp/file.txt
                       echo "AAA=BBB" >> /tmp/file.txt
                       cat /tmp/file.txt
                       export  $(cat /tmp/file.txt)
