@@ -47,9 +47,7 @@ pipeline {
                 script {
                     sh '''
                         ls
-                        cd robot
-                        ls
-                        /bin/sh robot --outputdir reports mytest.robot
+                        /bin/sh robot --outputdir robot/reports robot/mytest.robot
                     '''
                 }
             }
