@@ -3,12 +3,17 @@ def FAILED_STAGE
 pipeline {
     agent { label "master" }
     //checkout scm
+    environment{
+        MY_ENV="TEST"
+    }
+
     stages {
         stage('Build') {
             steps {
                 script {
                     FAILED_STAGE = env.STAGE_NAME
                 }
+                sh 'echo ${MY_ENV}'
                 sh 'echo "Hello World 1"'
                 sh '''
                     echo "Multiline shell steps works too"
