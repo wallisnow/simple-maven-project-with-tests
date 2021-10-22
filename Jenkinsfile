@@ -51,7 +51,11 @@ pipeline {
 //                        #!/bin/bash -xe
 //                        robot --outputdir robot/reports robot/mytest.robot
 //                    '''.stripIndent()
-                    manager.addShortText("same line here", "black", "lightgreen", "0px", "white")
+                      sh '''
+                      echo "AAA=BBB" >> file.txt
+                      export  $(${WORKSPACE}/file.txt)
+                      '''.stripIndent()
+                    manager.addShortText("$AAA", "black", "lightgreen", "0px", "white")
                 }
             }
         }
