@@ -45,10 +45,11 @@ pipeline {
         stage("run robot ") {
             steps {
                 script {
-                    sh '''
-                        #!/bin/bash -xe
-                        robot --outputdir robot/reports robot/mytest.robot
-                    '''.stripIndent()
+//                    sh '''
+//                        #!/bin/bash -xe
+//                        robot --outputdir robot/reports robot/mytest.robot
+//                    '''.stripIndent()
+                    manager.addShortText("same line here", "black", "lightgreen", "0px", "white")
                 }
             }
         }
