@@ -47,7 +47,7 @@ pipeline {
                 script {
                     sh '''
                         ls
-                        /bin/sh robot robot/mytest.robot
+                        /bin/sh robot --outputdir robot/reports robot/mytest.robot
                     '''
                 }
             }
@@ -66,10 +66,10 @@ pipeline {
                 script {
                     step(
                             [$class           : 'RobotPublisher',
-                             outputPath       : 'robot',
-                             outputFileName   : '**/output.xml',
-                             reportFileName   : '**/report.html',
-                             logFileName      : '**/log.html',
+                             outputPath       : 'robot/reports',
+                             outputFileName   : 'robot/reports/output.xml',
+                             reportFileName   : 'robot/reports/report.html',
+                             logFileName      : 'robot/reports/log.html',
                              passThreshold    : 100,
                              unstableThreshold: 0,
                              onlyCritical     : true,
