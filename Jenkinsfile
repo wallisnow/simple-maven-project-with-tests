@@ -55,7 +55,7 @@ pipeline {
                       echo "AAA=BBB" >> file.txt
                       export  $(${WORKSPACE}/file.txt)
                       '''.stripIndent()
-                    manager.addShortText("$AAA", "black", "lightgreen", "0px", "white")
+                    manager.addShortText("${AAA}", "black", "lightgreen", "0px", "white")
                 }
             }
         }
