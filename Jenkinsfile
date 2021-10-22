@@ -52,14 +52,11 @@ pipeline {
 //                        robot --outputdir robot/reports robot/mytest.robot
 //                    '''.stripIndent()
                       sh '''
-                      rm -rf /tmp/file.txt
-                      echo "AAA=BBB" >> /tmp/file.txt
-                      cat /tmp/file.txt
-                      export  $(cat /tmp/file.txt)
-                      echo $AAA
+                      rm -rf file.txt
+                      echo "AAAAAAA" >> file.txt
                       '''.stripIndent()
-                    duration = sh(script: "cat /tmp/file.txt", returnStdout: true).trim()
-                    manager.addShortText(duration, "black", "lightgreen", "0px", "white")
+                      duration = sh(script: "cat ${WORKSPACE}/file.txt", returnStdout: true).trim()
+                      manager.addShortText(duration, "black", "lightgreen", "0px", "white")
                 }
             }
         }
