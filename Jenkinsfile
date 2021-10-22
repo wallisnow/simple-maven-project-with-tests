@@ -3,8 +3,8 @@ def FAILED_STAGE
 pipeline {
     agent { label "master" }
     //checkout scm
-    environment{
-        MY_ENV="TEST ENV"
+    environment {
+        MY_ENV = "TEST ENV"
     }
 
     stages {
@@ -27,7 +27,7 @@ pipeline {
             }
         }
         stage('set new env') {
-            steps{
+            steps {
                 script {
                     env.MY_NEW_ENV = "foo" // creates env.SOMETHING variable
                     env.MY_ENV = "bar"
@@ -42,12 +42,12 @@ pipeline {
 
             }
         }
-        stage("run robot "){
-            steps{
+        stage("run robot ") {
+            steps {
                 script {
                     sh '''
+                        /bin/sh robot robot/mytest.robot --output reports/output.xml -l reports/log.html -r reports/report.html
                         ls
-                        /bin/sh robot robot/mytest.robot
                     '''
                 }
             }
@@ -59,6 +59,22 @@ pipeline {
                 }
                 junit '**/target/surefire-reports/TEST-*.xml'
                 archiveArtifacts 'target/*.jar'
+            }
+        }
+        stage('Robot Result') {
+            steps {
+                script {
+                    step([$class           : 'RobotPublisher',
+                          outputPath          : 'reports',
+                          outputFileName      : '**/output.xml',
+                          reportFileName      : '**/report.html',
+                          logFileName         : '**/log.html',
+                          passThreshold    : 100,
+                          unstableThreshold: 0,
+                          onlyCritical     : true,
+                          otherFiles       : "*.log"]
+                    )
+                }
             }
         }
     }
