@@ -27,8 +27,12 @@ pipeline {
             }
         }
         stage('set new env') {
-            env.MY_ENV = "TEST new ENV"
-            sh "printenv"
+            steps{
+                script {
+                    env.MY_ENV = "TEST new ENV"
+                    sh "printenv"
+                }
+            }
         }
         stage('Result') {
             steps {
