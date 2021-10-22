@@ -47,7 +47,7 @@ pipeline {
                 script {
                     sh '''
                         ls
-                        robot robot/mytest.robot
+                        /bin/sh robot robot/mytest.robot
                     '''
                 }
             }
