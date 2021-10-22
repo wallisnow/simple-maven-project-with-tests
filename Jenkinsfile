@@ -29,9 +29,15 @@ pipeline {
         stage('set new env') {
             steps{
                 script {
-                    env.MY_ENV = "TEST new ENV"
-                    sh "printenv"
+                    env.MY_NEW_ENV = "foo" // creates env.SOMETHING variable
+                    env.MY_ENV = "bar"
+                    sh "MY_NEW_ENV: ${MY_NEW_ENV}, MY_ENV: ${MY_ENV}"
                 }
+
+                withEnv(["MY_ENV=bar"]) { // it can override any env variable
+                    echo "FOO = ${env.MY_ENV}" // prints "FOO = foobar"
+                }
+
             }
         }
         stage('Result') {
