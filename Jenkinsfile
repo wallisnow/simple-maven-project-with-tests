@@ -4,7 +4,7 @@ pipeline {
     agent { label "master" }
     //checkout scm
     environment{
-        MY_ENV="TEST"
+        MY_ENV="TEST ENV"
     }
 
     stages {
@@ -14,6 +14,7 @@ pipeline {
                     FAILED_STAGE = env.STAGE_NAME
                 }
                 sh 'echo ${MY_ENV}'
+                sh "printenv"
                 sh 'echo "Hello World 1"'
                 sh '''
                     echo "Multiline shell steps works too"
