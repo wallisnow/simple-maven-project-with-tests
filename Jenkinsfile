@@ -46,10 +46,8 @@ pipeline {
             steps {
                 script {
                     sh '''
-                        /bin/sh robot robot/mytest.robot --output reports/output.xml -l reports/log.html -r reports/report.html
-                        ls
                         cd robot
-                        ls
+                        /bin/sh  robot --outputdir reports mytest.robot
                     '''
                 }
             }
