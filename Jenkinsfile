@@ -55,7 +55,7 @@ pipeline {
                       rm -rf file.txt
                       echo "AAA=BBB" >> /tmp/file.txt
                       cat /tmp/file.txt
-                      export  $(/tmp/file.txt)
+                      export  $(cat /tmp/file.txt)
                       echo $AAA
                       '''.stripIndent()
                     manager.addShortText("${AAA}", "black", "lightgreen", "0px", "white")
