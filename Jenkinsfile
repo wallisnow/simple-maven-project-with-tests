@@ -64,15 +64,16 @@ pipeline {
         stage('Robot Result') {
             steps {
                 script {
-                    step([$class           : 'RobotPublisher',
-                          outputPath          : 'reports',
-                          outputFileName      : '**/output.xml',
-                          reportFileName      : '**/report.html',
-                          logFileName         : '**/log.html',
-                          passThreshold    : 100,
-                          unstableThreshold: 0,
-                          onlyCritical     : true,
-                          otherFiles       : "*.log"]
+                    step(
+                            [$class           : 'RobotPublisher',
+                             outputPath       : 'robot/reports',
+                             outputFileName   : '**/output.xml',
+                             reportFileName   : '**/report.html',
+                             logFileName      : '**/log.html',
+                             passThreshold    : 100,
+                             unstableThreshold: 0,
+                             onlyCritical     : true,
+                             otherFiles       : "*.log"]
                     )
                 }
             }
