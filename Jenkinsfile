@@ -35,7 +35,7 @@ pipeline {
                 }
 
                 withEnv(["MY_ENV=bar"]) { // it can override any env variable
-                    echo "FOO = ${env.MY_ENV}" // prints "FOO = foobar"
+                    echo "MY_ENV = ${env.MY_ENV}" // prints "FOO = foobar"
                 }
 
             }
