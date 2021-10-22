@@ -31,7 +31,7 @@ pipeline {
                 script {
                     env.MY_NEW_ENV = "foo" // creates env.SOMETHING variable
                     env.MY_ENV = "bar"
-                    sh "MY_NEW_ENV: ${MY_NEW_ENV}, MY_ENV: ${MY_ENV}"
+                    sh "echo MY_NEW_ENV: ${MY_NEW_ENV}, MY_ENV: ${MY_ENV}"
                 }
 
                 withEnv(["MY_ENV=bar"]) { // it can override any env variable
