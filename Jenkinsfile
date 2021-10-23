@@ -53,8 +53,8 @@ pipeline {
 //                        robot --outputdir robot/reports robot/mytest.robot
 //                    '''.stripIndent()
                       sh '''
-                      rm -rf file.txt
-                      echo "AAAAAAA" >> file.txt
+                      rm -rf ${TEST_FILE}
+                      echo "AAAAAAA" >> ${TEST_FILE}
                       cat ${TEST_FILE}
                       '''.stripIndent()
 
