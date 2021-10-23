@@ -55,8 +55,13 @@ pipeline {
                       rm -rf file.txt
                       echo "AAAAAAA" >> file.txt
                       '''.stripIndent()
-                      duration = sh(script: "cat ${WORKSPACE}/file1.txt", returnStdout: true).trim()
-                      manager.addShortText(duration, "black", "lightgreen", "0px", "white")
+                }
+
+                env.TEST_FILE="file.txt"
+
+                script{
+                    duration = sh(script: "cat ${WORKSPACE}/${TEST_FILE}", returnStdout: true).trim()
+                    manager.addShortText(duration, "black", "lightgreen", "0px", "white")
                 }
             }
         }
