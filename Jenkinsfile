@@ -56,10 +56,8 @@ pipeline {
                       echo "AAAAAAA" >> file.txt
                       '''.stripIndent()
                 }
-
-                env.TEST_FILE="file.txt"
-
                 script{
+                    env.TEST_FILE="file.txt"
                     duration = sh(script: "cat ${WORKSPACE}/${TEST_FILE}", returnStdout: true).trim()
                     manager.addShortText(duration, "black", "lightgreen", "0px", "white")
                 }
