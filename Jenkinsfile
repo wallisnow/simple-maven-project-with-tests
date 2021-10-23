@@ -47,6 +47,7 @@ pipeline {
         stage("run robot ") {
             steps {
                 script {
+                      env.TEST_FILE="file.txt"
 //                    sh '''
 //                        #!/bin/bash -xe
 //                        robot --outputdir robot/reports robot/mytest.robot
@@ -54,10 +55,11 @@ pipeline {
                       sh '''
                       rm -rf file.txt
                       echo "AAAAAAA" >> file.txt
+                      cat ${TEST_FILE}
                       '''.stripIndent()
+
                 }
                 script{
-                    env.TEST_FILE="file.txt"
                     duration = sh(script: "cat ${WORKSPACE}/${TEST_FILE}", returnStdout: true).trim()
                     manager.addShortText(duration, "black", "lightgreen", "0px", "white")
                 }
