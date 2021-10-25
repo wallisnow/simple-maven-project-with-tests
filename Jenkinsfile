@@ -64,11 +64,11 @@ pipeline {
                     echo "return duration :${duration}"
                     manager.addShortText(duration, "black", "lightgreen", "0px", "white")
 
-                    not_exist_file = sh(script: "cat ${WORKSPACE}/not_exists.txt", returnStdout: true)
+                    exitValue = sh(script: "cat ${WORKSPACE}/not_exists.txt", returnStdout: true)
                     echo "return exitValue :${exitValue}"
                     //if not fails
                     if (not_exist_file!=0){
-                        manager.addShortText("not_exist_file", "black", "lightgreen", "0px", "white")
+                        manager.addShortText("exitValue", "black", "lightgreen", "0px", "white")
                     }
                 }
             }
