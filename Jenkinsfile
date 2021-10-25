@@ -47,19 +47,19 @@ pipeline {
         stage("run robot ") {
             steps {
                 script {
-                      env.TEST_FILE="file.txt"
+                    env.TEST_FILE = "file.txt"
 //                    sh '''
 //                        #!/bin/bash -xe
 //                        robot --outputdir robot/reports robot/mytest.robot
 //                    '''.stripIndent()
-                      sh '''
+                    sh '''
                       rm -rf ${TEST_FILE}
                       echo "AAAAAAA" >> ${TEST_FILE}
                       cat ${TEST_FILE}
                       '''.stripIndent()
 
                 }
-                script{
+                script {
                     duration = sh(script: "cat ${WORKSPACE}/${TEST_FILE}", returnStdout: true).trim()
                     echo "return duration :${duration}"
                     manager.addShortText(duration, "black", "lightgreen", "0px", "white")
@@ -67,13 +67,9 @@ pipeline {
                     try {
                         exitValue = sh(script: "cat ${WORKSPACE}/not_exists.txt", returnStdout: true)
                         echo "return exitValue :${exitValue}"
-                        //if not fails
-                        if (not_exist_file!=0){
-                            manager.addShortText("exitValue", "black", "lightgreen", "0px", "white")
-                        }
-                    }
-                    catch (err){
+                    } catch (err) {
                         echo "not_exists.txt file does not exists!"
+                        throw err
                     }
                 }
             }
