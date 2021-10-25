@@ -68,7 +68,7 @@ pipeline {
                         exitValue = sh(script: "cat ${WORKSPACE}/not_exists.txt", returnStdout: true)
                         echo "return exitValue :${exitValue}"
                     } catch (err) {
-                        echo "not_exists.txt file does not exists!"
+                        echo "not_exists.txt file does not exists! cause: " + err.getMessage()
                         //throw err
                     }
                 }
