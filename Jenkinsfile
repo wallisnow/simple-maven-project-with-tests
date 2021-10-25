@@ -69,7 +69,7 @@ pipeline {
                         echo "return exitValue :${exitValue}"
                     } catch (err) {
                         echo "not_exists.txt file does not exists!"
-                        throw err
+                        //throw err
                     }
                 }
             }
