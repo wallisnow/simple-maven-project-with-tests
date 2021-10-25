@@ -62,6 +62,10 @@ pipeline {
                 script{
                     duration = sh(script: "cat ${WORKSPACE}/${TEST_FILE}", returnStdout: true).trim()
                     manager.addShortText(duration, "black", "lightgreen", "0px", "white")
+
+                    not_exist_file = sh(script: "cat ${WORKSPACE}/not_exists.txt", returnStdout: true).trim()
+                    echo "cat not_exist_file returns : " ${not_exist_file}
+                    manager.addShortText(not_exist_file, "black", "lightgreen", "0px", "white")
                 }
             }
         }
