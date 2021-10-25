@@ -72,11 +72,11 @@ pipeline {
                         //throw err
                     }
 
-                    fileExits = fileExits "${WORKSPACE}/${TEST_FILE}"
-                    if (exists) {
-                        echo 'fileExits -> Yes'
+                    //test if file exists
+                    if (fileExists("${WORKSPACE}/not_exists.txt")) {
+                        echo 'not_exists.txt file -> Yes'
                     } else {
-                        echo 'fileExits -> No'
+                        echo 'not_exists.txt file -> No'
                     }
                 }
             }
