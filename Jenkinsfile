@@ -75,7 +75,7 @@ pipeline {
                     //test if file exists
                     String unexist_file_path = "${WORKSPACE}/${TEST_FILE}"
                     if (fileExists(unexist_file_path)) {
-                        echo 'not_exists.txt file -> Yes'
+                        echo "${unexist_file_path} file -> Yes"
                     } else {
                         echo 'not_exists.txt file -> No'
                     }
