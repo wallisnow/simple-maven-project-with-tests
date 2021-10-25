@@ -64,8 +64,9 @@ pipeline {
                     manager.addShortText(duration, "black", "lightgreen", "0px", "white")
 
                     not_exist_file = sh(script: "cat ${WORKSPACE}/not_exists.txt", returnStdout: true).trim()
-                    echo "cat not_exist_file returns : " ${not_exist_file}
-                    manager.addShortText(not_exist_file, "black", "lightgreen", "0px", "white")
+                    if (not_exist_file!=0){
+                        manager.addShortText(not_exist_file, "black", "lightgreen", "0px", "white")
+                    }
                 }
             }
         }
