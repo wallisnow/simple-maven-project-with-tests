@@ -73,7 +73,7 @@ pipeline {
                     }
 
                     //test if file exists
-                    if (fileExists("${WORKSPACE}/not_exists.txt")) {
+                    if (fileExists("${WORKSPACE}/${TEST_FILE}")) {
                         echo 'not_exists.txt file -> Yes'
                     } else {
                         echo 'not_exists.txt file -> No'
