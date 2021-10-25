@@ -77,7 +77,7 @@ pipeline {
                     if (fileExists(unexist_file_path)) {
                         echo "${unexist_file_path} file -> Yes"
                     } else {
-                        echo 'not_exists.txt file -> No'
+                        echo "${unexist_file_path} file -> No"
                     }
                 }
             }
