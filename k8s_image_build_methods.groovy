@@ -69,7 +69,7 @@ void buildSourceCode(int stageTimeout, String timeoutUnits='MINUTES') {
 //                                     string(name: 'DONOT_BUILD_TAR_BALL', value: 'true')]
 //            }
             build job: 'mock-eccd-build-scheduler-v4',
-                    parameters: [string(name: 'GERRIT_REFSPEC', value: "${GERRIT_REFSPEC}"),
+                    parameters: [string(name: 'GERRIT_REFSPEC', value: "${env.GIT_COMMIT}"),
                                  string(name: 'DONOT_BUILD_TAR_BALL', value: 'true')]
         }
     }
