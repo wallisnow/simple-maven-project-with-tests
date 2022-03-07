@@ -1,0 +1,39 @@
+# Support repo based installation.
+# This is a feature for internal use only, so we skip the error if git is not installed.
+# See https://cc-jira.rnd.ki.sw.ericsson.se/browse/ECE-2234
+---
+- name: Check if in git repo
+  command: git rev-parse --git-dir
+  register: git_repo_main_dir
+  ignore_errors: yes
+
+- name: Get container-list.json if in git
+  block:
+#    - name: Get erikube repo version
+#      command: git rev-parse {{ from_git_commit | default('HEAD') }}
+#      register: git_hash
+
+    - name: Get erikube repo version (mock)
+      command: echo 00e834e287501079a4485a49211e8cd178aa137b
+      register: git_hash
+
+    - name: Create destination directory
+      file:
+        path: "{{ git_repo_main_dir.stdout.replace('.git','') }}/erikube-deployment/ansible/common"
+        state: directory
+        mode: '0755'
+
+    - name: Copy container list from artifactory
+      get_url:
+        url: "https://arm.rnd.ki.sw.ericsson.se/artifactory/proj-erikube-generic-local/erikube/build/commits/{{ git_hash.stdout }}/container-list.json"
+        dest: "{{ git_repo_main_dir.stdout.replace('.git','') }}/erikube-deployment/ansible/common/container-list.json"
+      ignore_errors: yes
+      register: artifactory_result
+
+    - name: Fallback to the current container-list.json if it exists, fail otherwise
+      stat:
+        path: "{{ git_repo_main_dir.stdout.replace('.git','') }}/erikube-deployment/ansible/common/container-list.json"
+      register: stat_result
+      failed_when: not stat_result.stat.exists
+      when: artifactory_result is failed
+  when: git_repo_main_dir is defined and git_repo_main_dir.stdout is defined and git_repo_main_dir.stdout.endswith('.git')

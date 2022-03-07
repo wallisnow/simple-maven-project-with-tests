@@ -141,4 +141,19 @@ void generateImageNames(int stageTimeout, String timeoutUnits = 'MINUTES', Map i
     runStage(stageName, stageTimeout, timeoutUnits, stageAction)
 }
 
+void fetchContainerList(int stageTimeout, String timeoutUnits='MINUTES') {
+
+    String stageName = "Fetch container list"
+    def stageAction = {
+        dir("erikube-deployment/ansible/erikube") {
+            echo 'Fetch container-list.json file'
+            sh '''\
+                  #!/bin/bash -xe
+                  ansible-playbook playbooks/get-container-list.yml
+               '''.stripIndent()
+        }
+    }
+    runStage(stageName, stageTimeout, timeoutUnits, stageAction)
+}
+
 return this
