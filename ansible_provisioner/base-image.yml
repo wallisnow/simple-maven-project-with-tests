@@ -1,0 +1,891 @@
+---
+- name: Gather facts as non root
+  hosts: base
+  gather_facts: yes
+
+- name: Install base images required packages from rmt server
+  hosts: base
+  become: yes
+  any_errors_fatal: true
+  vars:
+    - mlx_tmp_path: "/tmp/mlx_driver"
+    - sdc_path: "/var/lib/eccd/powerflex_sdc"
+  tasks:
+    - name: Execute host-prepare and then install docker
+      block:
+        - name: Download CA cert from RMT server to client server
+          get_url:
+            url: http://{{ sles_rmt_url }}/certs/rmt-ca.crt
+            dest: /etc/pki/trust/anchors/rmt-ca.crt
+
+        - name: Update certs
+          command: "update-ca-certificates"
+
+        - name: Add repositories
+          template:
+            src: ccd_sles_rmt.repo
+            dest: "{{ zypper_repo_file }}"
+            owner: root
+            group: root
+            mode: 0644
+
+        - name: Refresh and auto import keys
+          zypper_repository:
+            repo: "*"
+            auto_import_keys: yes
+            runrefresh: yes
+
+        - name: Install SLES python packages
+          zypper:
+            name: "{{ sles_python_packages }}"
+            state: latest
+
+        - name: Install SLES basic packages
+          zypper:
+            name: "{{ sles_common_prepare_packages }}"
+            state: latest
+
+        - name: Install SLES sssd packages
+          zypper:
+            name: "{{ sles_ssd_packages }}"
+            state: latest
+
+        - include_role:
+            name: ../../../erikube-deployment/ansible/erikube/roles/host-prepare
+
+        - include_role:
+            name: ../../../erikube-deployment/ansible/erikube/roles/docker
+            tasks_from: install
+
+        - include_role:
+            name: ../../../erikube-deployment/ansible/erikube/roles/docker
+
+        - include_role:
+            name: ../../../erikube-deployment/ansible/erikube/roles/erikube-defaults
+
+
+        # Remove the latest kernel-default since we want an older kernel version
+        - name: Remove kernel-default
+          zypper:
+            name: kernel-default
+            state: "absent"
+
+        - name: Install SLES patched packages
+          zypper:
+            name: "{{ sles_patch_packages }}"
+            state: present
+            force: yes
+            disable_gpg_check: yes
+          when: sles_patch_packages | length > 0
+
+        - name: Reboot the machine in order to take new kernel and kernel-modules in case we take PTF kernels
+          shell: "sleep 5 && reboot"
+          async: 1
+          poll: 0
+
+        - name: Wait for the reboot to complete
+          wait_for_connection:
+            connect_timeout: 20
+            sleep: 5
+            delay: 5
+
+        - name: Install DPDK packages
+          zypper:
+            name: "{{ sles_dpdk_packages }}"
+            state: latest
+
+        # We are rebuilding rte_kni with additional patch and loading it for IMS use cases.
+        # Fixing latency issues found with latest rte_kni modules
+        - name: Get location of the rte_kni kernel module
+          become: true
+          command: modinfo --filename rte_kni
+          register: rte_kni_module_location
+
+        - name: Remove rte_kni binary
+          become: true
+          file:
+            path: "{{rte_kni_module_location.stdout}}"
+            state: absent
+
+        - name: Install custom built rte_kni.ko kernel module
+          become: true
+          get_url:
+            url: https://arm.rnd.ki.sw.ericsson.se/artifactory/proj-erikube-generic-local/erikube/sles-patches/sles/sp2/dpdk/5.3.18-24.96-default-rte_kni.ko
+            dest: "{{rte_kni_module_location.stdout}}"
+
+        - name: Install HPE driver package
+          zypper:
+            name: "{{ sles_hpe_driver_package }}"
+            state: present
+            force: yes
+            disable_gpg_check: yes
+
+        - name: Install Intel driver packages
+          zypper:
+            name: "{{ sles_intel_driver_packages }}"
+            state: present
+            force: yes
+            disable_gpg_check: yes
+          when: sles_intel_driver_packages | length > 0
+
+        - name: Install MLX driver
+          block:
+            - name: Create temp folder for MLX driver
+              file:
+                path: "{{ mlx_tmp_path }}"
+                state: directory
+                mode: "0755"
+
+            - name: Get current kernel version
+              command: "uname -r"
+              register: kernel_version
+
+            - name: Download MLX OFED driver package
+              get_url:
+                url: "{{ recompiled_sles_mlx_ofed_path }}/{{ kernel_version.stdout }}-MLNX_OFED_LINUX-{{ mlx_ofed_version }}-sles15-ext.tgz"
+                dest: "{{ mlx_tmp_path }}/MLNX_OFED_LINUX-{{ mlx_ofed_version }}-sles15-ext.tgz"
+
+            - name: Unarchive MLX OFED driver package
+              unarchive:
+                src: "{{ mlx_tmp_path }}/MLNX_OFED_LINUX-{{ mlx_ofed_version }}-sles15-ext.tgz"
+                dest: "{{ mlx_tmp_path }}"
+                remote_src: yes
+                list_files: yes
+              register: archive_contents
+
+            - name: Install MLX driver required packages
+              zypper:
+                name: "{{ sles_mlx_packages }}"
+                state: latest
+
+            - name: Install MLX driver
+              shell:
+                cmd: "./mlnxofedinstall --force"
+                chdir: "{{ mlx_tmp_path }}/{{ archive_contents.files[0] }}"
+
+            - name: "Cleanup temp folder for MLX driver"
+              file:
+                path: "{{ item }}"
+                state: absent
+              loop:
+                - "{{ mlx_tmp_path }}"
+
+        - name: Enable sysstat service
+          systemd:
+            name: sysstat
+            state: started
+            enabled: yes
+            masked: no
+
+        - name: Download sdc
+          block:
+
+            - name: Create temp folder for powerflex sdc
+              file:
+                path: "{{ sdc_path }}"
+                state: directory
+                mode: "0755"
+
+            - name: Download sdc rpm file
+              get_url:
+                url: "{{ item }}"
+                dest: "{{ sdc_path }}/{{ item | basename  }}"
+                mode: "0744"
+              with_items: "{{ sles_storage_packages }}"
+
+        - name: Install SLES patched packages
+          zypper:
+            name: "{{ sles_patch_packages }}"
+            state: present
+            force: yes
+            disable_gpg_check: yes
+          when: sles_patch_packages | length > 0
+
+        - name: Read custom repo file content
+          set_fact:
+            custom_repos: "{{ lookup('template', 'ccd_sles_rmt_custom.repo') }}"
+
+        - name: Add custom repositories
+          blockinfile:
+            block: "{{ custom_repos }}"
+            path: "{{ zypper_repo_file }}"
+
+        - name: Refresh and auto import keys
+          zypper_repository:
+            repo: "*"
+            auto_import_keys: yes
+            runrefresh: yes
+
+        - name: Install heat-agent and relative required packages
+          zypper:
+            name: "{{ sles_openstack_packages }}"
+            state: present
+
+        - name: Install oldpackages
+          zypper:
+            name: "{{ sles_oldpackages }}"
+            state: present
+            oldpackage: yes
+            type: package
+
+      always:
+        - name: Remove all zypper repositories
+          command: zypper removerepo --all
+          args:
+            warn: no
+
+      when:
+        - ansible_distribution == "SLES"
+        - sles_rmt_url is defined
+
+# In case there are issues with the rmt server, the SCC repos can be used for
+# installing the packages by undefining the "sles_rmt_url" in extra_vars.json
+- name: Install base images required packages from SUSE Customer Center
+  hosts: base
+  become: yes
+  any_errors_fatal: true
+  vars:
+    - mlx_tmp_path: "/tmp/mlx_driver"
+  tasks:
+    - name: Execute host-prepare and then install docker
+      block:
+        - name: Connect to SUSE Customer Center with Registration Code on SLES host
+          command: "SUSEConnect -r {{ sles_reg_code }}"
+
+        - name: Enable extra packages on SLES host
+          command: "SUSEConnect -p {{ item }}"
+          retries: 3
+          delay: 3
+          register: result
+          until: result.rc == 0
+          loop: "{{ sles_SUSEConnect_products }}"
+
+        - name: Enable hidden repositories
+          command: "zypper mr -e -a"
+
+        - name: Install SLES python packages
+          zypper:
+            name: "{{ sles_python_packages }}"
+            state: latest
+
+        - name: Install SLES basic packages
+          zypper:
+            name: "{{ sles_common_prepare_packages }}"
+            state: latest
+
+        - name: Install SLES sssd packages
+          zypper:
+            name: "{{ sles_ssd_packages }}"
+            state: latest
+
+        - name: Install DPDK packages
+          zypper:
+            name: "{{ sles_dpdk_packages }}"
+            state: latest
+
+        - include_role:
+            name: ../../../erikube-deployment/ansible/erikube/roles/host-prepare
+
+        - include_role:
+            name: ../../../erikube-deployment/ansible/erikube/roles/docker
+            tasks_from: install
+
+        - include_role:
+            name: ../../../erikube-deployment/ansible/erikube/roles/docker
+        - include_role:
+            name: ../../../erikube-deployment/ansible/erikube/roles/erikube-defaults
+
+        - name: Install SLES patch packages
+          zypper:
+            name: "{{ sles_patch_packages }}"
+            state: present
+            force: yes
+            disable_gpg_check: yes
+          when: sles_patch_packages | length > 0
+
+#        - name: Reboot the machine in order to take new kernel and kernel-modules
+#          shell: "sleep 5 && reboot"
+#          async: 1
+#          poll: 0
+
+#        - name: Wait for the reboot to complete
+#          wait_for_connection:
+#            connect_timeout: 20
+#            sleep: 5
+#            delay: 5
+
+        # We are rebuilding rte_kni with additional patch and loading it for IMS use cases.
+        # Fixing latency issues found with latest rte_kni modules
+        - name: Get location of the rte_kni kernel module
+          command: sudo modinfo --filename rte_kni
+          register: rte_kni_module_location
+
+        - name: Remove rte_kni binary
+          become: true
+          file:
+            path: "{{rte_kni_module_location.stdout}}"
+            state: absent
+
+        - name: Install custom built rte_kni.ko kernel module
+          get_url:
+            url: https://arm.rnd.ki.sw.ericsson.se/artifactory/proj-erikube-generic-local/erikube/sles-patches/sles/sp2/dpdk/5.3.18-24.96-default-rte_kni.ko
+            dest: "{{rte_kni_module_location.stdout}}"
+
+        - name: Install HPE driver package
+          zypper:
+            name: "{{ sles_hpe_driver_package }}"
+            state: present
+            force: yes
+            disable_gpg_check: yes
+
+        - name: Install Intel driver packages
+          zypper:
+            name: "{{ sles_intel_driver_packages }}"
+            state: present
+            force: yes
+            disable_gpg_check: yes
+          when: sles_intel_driver_packages | length > 0
+
+        - name: Install MLX driver
+          block:
+            - name: Create temp folder for MLX driver
+              file:
+                path: "{{ mlx_tmp_path }}"
+                state: directory
+                mode: "0755"
+
+            - name: Get current kernel version
+              command: "uname -r"
+              register: kernel_version
+
+            - name: Download MLX OFED driver package
+              get_url:
+                url: "{{ recompiled_sles_mlx_ofed_path }}/{{ kernel_version.stdout }}-MLNX_OFED_LINUX-{{ mlx_ofed_version }}-sles15-ext.tgz"
+                dest: "{{ mlx_tmp_path }}/MLNX_OFED_LINUX-{{ mlx_ofed_version }}-sles15-ext.tgz"
+
+            - name: Unarchive MLX OFED driver package
+              unarchive:
+                src: "{{ mlx_tmp_path }}/MLNX_OFED_LINUX-{{ mlx_ofed_version }}-sles15-ext.tgz"
+                dest: "{{ mlx_tmp_path }}"
+                remote_src: yes
+                list_files: yes
+              register: archive_contents
+
+            - name: Install MLX driver required packages
+              zypper:
+                name: "{{ sles_mlx_packages }}"
+                state: latest
+
+            - name: Install MLX driver
+              shell:
+                cmd: "./mlnxofedinstall --force"
+                chdir: "{{ mlx_tmp_path }}/{{ archive_contents.files[0] }}"
+
+            - name: "Cleanup temp folder for MLX driver"
+              file:
+                path: "{{ item }}"
+                state: absent
+              loop:
+                - "{{ mlx_tmp_path }}"
+
+        - name: Enable sysstat service
+          systemd:
+            name: sysstat
+            state: started
+            enabled: yes
+            masked: no
+
+        - name: Add extra SLES repo for installing heat-agent packages
+          zypper_repository:
+            repo: "{{ sles_openstack_repo }}"
+            name: "{{ sles_openstack_repo.split('/')[6] }}"
+            state: present
+            runrefresh: yes
+            auto_import_keys: yes
+          loop: "{{ sles_openstack_repos }}"
+          loop_control:
+            loop_var: sles_openstack_repo
+
+        - name: Install heat-agent and relative required packages
+          zypper:
+            name: "{{ sles_openstack_packages }}"
+            state: present
+
+      always:
+        - name: De-register SLES repos on SLES host
+          command: "SUSEConnect -d"
+          retries: 10
+          delay: 6
+          register: result
+          until: result.rc == 0
+          ignore_errors: yes
+
+        - name: Remove extra SLES repo after installed heat-agent packages
+          zypper_repository:
+            repo: "{{ item .split('/')[6]}}"
+            state: absent
+          loop: "{{ sles_openstack_repos }}"
+
+      when:
+        - ansible_distribution == "SLES"
+        - sles_rmt_url is not defined
+
+- name: Further configuration for base image
+  hosts: base
+  become: yes
+  roles:
+    - ../../../erikube-deployment/ansible/erikube/roles/erikube-defaults
+  pre_tasks:
+    - name: Login to armdocker
+      docker_login:
+        registry: "{{ armdocker_url }}"
+        username: "{{ lookup('env','ARMDOCKER_USERNAME') }}"
+        password: "{{ lookup('env','ARMDOCKER_PASSWORD') }}"
+  tasks:
+    - name: Install kubelet, kubeadm, kubectl binary file via erikube-installer
+      docker_container:
+        name: erikube-installer
+        image: "{{ erikube_installer_image }}"
+        state: started
+        command: install
+        volumes:
+          - /usr/local:/target
+          - /var/run/docker.sock:/var/run/docker.sock:rw
+        env:
+          PAUSE_IMAGE: "{{ eccd_ibd_registry_host }}/{{ containers.kubernetes.pause }}"
+
+    - name: Wait until erikube_setup is present before continuing
+      wait_for:
+        path: /usr/local/lib/erikube_setup
+        timeout: 30
+
+    - name: Copy container-list.json from artifactory
+      get_url:
+        url: "https://arm.rnd.ki.sw.ericsson.se/artifactory/proj-erikube-generic-local/erikube/build/commits/{{ git_commit }}/container-list.json"
+        dest: /usr/local/lib/erikube_setup/image-list.json
+
+    - name: Create folder to store eccd scripts
+      file:
+        path: "{{ eccd_file_path }}"
+        state: directory
+
+    - name: Copy Backup Binary from installer
+      shell: "docker cp erikube-installer:/binaries/backup {{ eccd_file_path }}/"
+
+    - name: remove erikube-installer container
+      docker_container:
+        name: erikube-installer
+        keep_volumes: no
+        state: absent
+
+    - name: Remove erikube-installer container image in order to reduce disk usage
+      docker_image:
+        state: absent
+        name: "{{ erikube_installer_image }}"
+        force: yes
+
+    - name: Create folder to store eccd files
+      file:
+        path: "{{ eccd_config_path }}"
+        state: directory
+
+    - name: Generate image version file
+      template:
+        src: "image_version.j2"
+        dest: "{{ eccd_config_path }}/{{ eccd_image_version_file }}"
+        mode: 0775
+
+    - name: Enable systemd watchdog
+      shell: "crudini --set /etc/systemd/system.conf Manager RuntimeWatchdogSec {{ watchdog_timeout }}"
+
+    - name: Increase the amount of inotify instances
+      sysctl:
+        name: "fs.inotify.max_user_instances"
+        value: 8192
+        sysctl_set: yes
+        state: present
+        reload: yes
+
+    - name: Configure allow non-dhcp installations
+      copy:
+        src: files/04_datasources.cfg
+        dest: /etc/cloud/cloud.cfg.d/04_datasources.cfg
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: Cloud-init NoCloud setup
+      block:
+        - name: Create seed location on eccd data dir
+          file:
+            path: "/var/lib/eccd/nocloud/"
+            state: directory
+            recurse: true
+        - name: Create seed location on cloud-init data dir
+          file:
+            path: /var/lib/cloud/seed
+            state: directory
+            recurse: true
+        - name: Link it to default location seed for cloud-init
+          file:
+            src: "/var/lib/eccd/nocloud"
+            dest: "/var/lib/cloud/seed/nocloud"
+            state: link
+
+    - name: "Disable netconfig handling for /etc/resolv.conf file"
+      replace:
+        path: "/etc/sysconfig/network/config"
+        regexp: 'NETCONFIG_DNS_POLICY="auto"'
+        replace: 'NETCONFIG_DNS_POLICY=""'
+
+- name: Configuration for heat agent
+  hosts: base
+  become: yes
+  tasks:
+    - name: Create /usr/libexec folder for heat-agent usage
+      file:
+        state: directory
+        path: "/usr/libexec"
+
+    - name: Link heat agents compnent folders from /usr/lib to /usr/libexec (not sure why SLES install them into /usr/lib)
+      command: "ln -s /usr/lib/{{ item }}/ /usr/libexec "
+      loop:
+        - "heat-config"
+        - "os-apply-config"
+        - "os-refresh-config"
+
+    - name: Reduce logging from running 55-heat-config so secrets aren't place in log files
+      replace:
+        path: /usr/libexec/os-refresh-config/configure.d/55-heat-config
+        regexp: "^    log.setLevel\\('DEBUG'\\)$"
+        replace: "    log.setLevel('WARNING')"
+
+    - name: Patch heat-config-notify Retry bug (POST isn't retried)
+      command: "sed -i '/Retry(/a\ \ \ \ \ \ \ \ \ \ \ \ method_whitelist=False,' /usr/bin/heat-config-notify"
+
+    - name: Patch heat-config-notify Remove utf-8 encoding
+      command: |
+        sed -i "s/, encoding='utf-8'//g" /usr/bin/heat-config-notify
+
+    - name: Enable OpenStack heat agent
+      systemd:
+        name: os-collect-config
+        state: started
+        enabled: yes
+        daemon_reload: yes
+
+- name: Create network tunning service
+  hosts: base
+  become: yes
+  tasks:
+    - name: Create network tunning service file
+      copy:
+        content: |
+          [Unit]
+          Description=Service that will tune network configuration after each reboot
+          Wants=network-online.target
+          After=network-online.target
+
+          [Service]
+          Type=oneshot
+          # parameter description: "gro_state", "rps_state", "reserved_cpuset", "isolate_interrupts" "cpu_manager_policy" "nic_wildcard"
+          ExecStart=/var/lib/eccd/network_tuning.sh on on 0 true none eth
+          RemainAfterExit=yes
+
+          [Install]
+          WantedBy=multi-user.target
+        dest: "/etc/systemd/system/network_tune.service"
+
+    - name: Create script for tuning network interfaces parameter
+      copy:
+        src: files/network_tuning.sh
+        dest: /var/lib/eccd/network_tuning.sh
+        owner: root
+        mode: 0755
+
+    - name: Enable network_tune service by default
+      systemd:
+        name: network_tune
+        state: started
+        enabled: yes
+      failed_when: false
+
+    - name: Disable IPv6 tempaddr as suggested by OpenStack guests
+      block:
+        - name: set parameters in sysctl.conf to disable IPv6 tempaddr
+          blockinfile:
+            path: /etc/sysctl.conf
+            marker: "#CCD: Disable IPv6 privacy extension"
+            block: |
+              net.ipv6.conf.all.use_tempaddr = 0
+              net.ipv6.conf.default.use_tempaddr = 0
+
+        - name: Execute shell commands to active changes of disable IPv6 tempaddr
+          shell: |
+            sysctl -w net.ipv6.conf.all.use_tempaddr=0
+            sysctl -w net.ipv6.conf.default.use_tempaddr=0
+
+    - name: Set common sysctl settings
+      block:
+        - name: set parameters in sysctl.conf to disable IPv6 tempaddr
+          blockinfile:
+            path: /etc/sysctl.conf
+            marker: "#CCD: Common settings"
+            block: |
+              net.ipv4.tcp_mtu_probing = 2
+
+        - name: set pid_max to 150000 in sysctl.conf
+          blockinfile:
+            path: /etc/sysctl.conf
+            marker: "#CCD: pid_max settings"
+            block: |
+              kernel.pid_max = 150000
+
+    - name: set parameters in sysctl.conf for high performance
+      blockinfile:
+        path: /etc/sysctl.conf
+        marker: "#CCD: high performance settings"
+        block: |
+          kernel.numa_balancing = 0
+          kernel.sched_min_granularity_ns = 10000000
+          kernel.sched_wakeup_granularity_ns = 15000000
+          kernel.sched_migration_cost_ns = 250000
+          net.core.netdev_max_backlog = 250000
+          net.core.netdev_budget = 600
+          net.core.somaxconn = 4096
+          net.core.busy_poll = 0
+          net.core.busy_read = 0
+          net.ipv4.tcp_fastopen = 1
+          net.ipv4.tcp_sack = 1
+          net.ipv4.tcp_max_syn_backlog = 3240000
+          net.ipv4.tcp_tw_reuse = 0
+          net.ipv4.tcp_timestamps = 0
+          net.ipv4.tcp_syn_retries = 8
+          net.netfilter.nf_conntrack_tcp_be_liberal = 1
+          net.core.rmem_max=67108864
+          net.core.wmem_max=67108864
+
+    - name: Set ulimit file descriptors to higher values
+      blockinfile:
+        path: /etc/security/limits.conf
+        marker: "#CCD: Set nofile ulimit to higher value"
+        block: |
+          * - nofile 1048576
+          * - core unlimited
+
+- name: Create pid priority configuration service
+  hosts: base
+  become: yes
+  tasks:
+    - name: Create pid priority configuration service file
+      copy:
+        content: |
+          [Unit]
+          Description=Update process priorites for renice and ionice
+
+          [Service]
+          Type=simple
+          User=root
+          Restart=always
+          RestartSec=300s
+          ExecStart=/var/lib/eccd/set-process-priorities.sh
+
+          # Exit status for SIGTERM shutdown is OK
+          SuccessExitStatus=1
+
+          [Install]
+          WantedBy=multi-user.target
+        dest: "/etc/systemd/system/update-pid-priorities.service"
+
+    - name: Create script for configuring process priorites
+      copy:
+        src: files/set-process-priorities.sh
+        dest: /var/lib/eccd/set-process-priorities.sh
+        owner: root
+        mode: 0755
+
+    - name: Enable update-pid-priorities service by default
+      systemd:
+        name: update-pid-priorities
+        state: started
+        enabled: yes
+      failed_when: false
+
+- import_playbook: security-hardening.yml
+
+- import_playbook: cleanup.yml
+
+- name: Copying script for troubleshooting
+  hosts: base
+  become: yes
+  tasks:
+    - name: Copy troubleshooting script file to /user/local/bin/
+      copy:
+        src: ../../../erikube-deployment/troubleshooting/collect_data.sh
+        dest: "/usr/local/bin/collect_data.sh"
+        owner: root
+        group: root
+        mode: 0755
+      loop:
+        - collect_data.sh
+
+- name: Copying operation scripts
+  hosts: base
+  become: yes
+  tasks:
+    - name: Copy scripts to /usr/local/bin directory (e.g. repair config disk)
+      copy:
+        src: "../../../erikube-deployment/scripts/{{ item }}"
+        dest: "/usr/local/bin/{{ item }}"
+        owner: root
+        group: root
+        mode: 0755
+      loop:
+        - repair_config_disk.sh
+- name: Configure containerd and crictl
+  hosts: base
+  become: yes
+  tasks:
+    - name: Copy crictl binary to /usr/bin
+      command: "sudo cp /usr/local/bin/crictl /usr/bin/crictl"
+
+    - name: Configure containerd
+      include_role:
+        name: ../../../erikube-deployment/ansible/erikube/roles/containerd
+      vars:
+      - erikube_pause_image: "{{ eccd_ibd_registry_host }}/{{ containers.kubernetes.pause }}"
+
+    - name: Configuring docker service file with BindsTo
+      include_role:
+        name: ../../../erikube-deployment/ansible/erikube/roles/kube-common
+        tasks_from: configure-docker-svc
+
+    - include_role:
+        name: ../../../erikube-deployment/ansible/erikube/roles/crictl
+
+    - name: Remove suse packaged containerd binaries so it can use built binary
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "/usr/sbin/containerd"
+        - "/usr/sbin/containerd-shim"
+        - "/usr/sbin/containerd-shim-runc-v1"
+        - "/usr/sbin/containerd-shim-runc-v2"
+
+    - name: Daemon-reload
+      command: "sudo systemctl daemon-reload"
+
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+
+    - name: Restart the containerd service
+      become: yes
+      systemd:
+        name: containerd
+        enabled: yes
+        state: restarted
+        daemon_reload: yes
+
+- name: Configure runc
+  hosts: base
+  become: yes
+  tasks:
+    - name: Remove built runc binaries so it can use default binary
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "/usr/bin/runc"
+
+    - name: Configure runc
+      include_role:
+        name: ../../../erikube-deployment/ansible/erikube/roles/runc
+
+- name: Copy scripts related to chrony monitoring
+  hosts: base
+  become: yes
+  tasks:
+    - name: Copy chrony.py to /var/lib/eccd/
+      copy:
+        src: files/chrony-monitoring/chrony.py
+        dest: /var/lib/eccd/chrony.py
+        group: root
+        owner: root
+        mode: 0755
+
+    - name: Copy chrony_monitor.service
+      copy:
+        src: files/chrony-monitoring/chrony_monitor.service
+        dest: /etc/systemd/system/chrony_monitor.service
+        group: root
+        owner: root
+        mode: 0644
+
+    - name: Copy chrony_monitor.timer
+      copy:
+        src: files/chrony-monitoring/chrony_monitor.timer
+        dest: /etc/systemd/system/chrony_monitor.timer
+        group: root
+        owner: root
+        mode: 0644
+
+    - name: Enable chrony_monitor service
+      service:
+        name: chrony_monitor.service
+        enabled: true
+
+    - systemd:
+        name: chrony_monitor.timer
+        state: started
+        enabled: True
+
+- name: Configure cpuqosenabler
+  hosts: base
+  become: yes
+  tasks:
+    - name: Generate the cpuqosenabler.service file
+      copy:
+        dest: /usr/local/lib/systemd/system/cpuqosenabler.service
+        content: |
+          [Unit]
+          Description=cpuqosenabler: Daemon to configure CPU QOS
+
+          [Service]
+          ExecStart=/usr/local/bin/cpuqosenabler
+          Restart=always
+          StartLimitInterval=0
+          RestartSec=10
+
+          [Install]
+          WantedBy=multi-user.target
+
+- name: Create directory for storing eccd logs
+  hosts: base
+  become: yes
+  tasks:
+    - name: Create eccd folder under /var/log/ where the deployment logs could be collected
+      file:
+        path: "/var/log/eccd"
+        state: directory
+        mode: "0755"
+
+- name: Configure log rotation for multus-cni
+  hosts: base
+  become: yes
+  tasks:
+    - name: Generate the log rotation file in logrotate.d directory
+      copy:
+        dest: /etc/logrotate.d/multus.logrotate
+        content: |
+          /var/log/multus.log
+          {
+              size 10M
+              start 1
+              missingok
+              rotate 20
+              compress
+              sharedscripts
+              copytruncate
+          }

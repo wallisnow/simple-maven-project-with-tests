@@ -35,7 +35,7 @@ void buildSourceCode(int stageTimeout, String timeoutUnits='MINUTES') {
     def stageAction = {
         String buildDecisionCmd = '''\
         #!/bin/bash -xe
-        source common/utils/erikube-tag.sh
+        source common/utils/kube-tag.sh
         #creds="--netrc-file /home/jenkins/sdnrad.creds"
         # Artifactory rest api:
          url="https://arm.rnd.ki.sw.ericsson.se/artifactory/api/storage"
@@ -145,7 +145,7 @@ void fetchContainerList(int stageTimeout, String timeoutUnits='MINUTES') {
 
     String stageName = "Fetch container list"
     def stageAction = {
-        dir("erikube-deployment/ansible/erikube") {
+        dir("kube-deployment/ansible/kube") {
             echo 'Fetch container-list.json file'
             sh '''\
                   #!/bin/bash -xe
@@ -154,6 +154,24 @@ void fetchContainerList(int stageTimeout, String timeoutUnits='MINUTES') {
         }
     }
     runStage(stageName, stageTimeout, timeoutUnits, stageAction)
+}
+
+void buildBaseImageIfNeeded(int stageTimeout, String timeoutUnits='MINUTES') {
+
+    String stageName = "Build base image if needed"
+    def stageAction = {
+        sh '''
+            #!/bin/bash -xe
+            echo "packer build image_build.json"
+           '''.stripIndent()
+    }
+    def catchAction = {}
+    if (env.OS_AUTH_URL.contains("serodc92ceenbi")) {
+        catchAction = {
+            removeResources()
+        }
+    }
+    runStage(stageName, stageTimeout, timeoutUnits, stageAction, catchAction)
 }
 
 return this
