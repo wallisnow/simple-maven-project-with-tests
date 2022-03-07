@@ -114,6 +114,7 @@ pipeline {
                     commonK8sMethod.generateImageNames(1, 'MINUTES', images, log)
                     commonK8sMethod.buildSourceCode(3, 'HOURS')
                     commonK8sMethod.fetchContainerList(10, 'MINUTES')
+                    commonK8sMethod.buildBaseImageIfNeeded(40, 'MINUTES')
                 }
             }
         }
