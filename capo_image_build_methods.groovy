@@ -40,7 +40,9 @@ void buildValuePackage(int stageTimeout, String timeoutUnits='MINUTES')
             // Build them with python script
             // The script saves a JSON list to BM_VALUEPACK_JSON
             sh '''#!/bin/bash -xe
-                ehco "${WORKSPACE}/builder/value_packs.py  build  --container-list container-list.json  >> ${BM_VALUEPACK_JSON}"
+                echo "${WORKSPACE}/builder/value_packs.py  build  --container-list container-list.json  >> ${BM_VALUEPACK_JSON}"
+                echo "create draino_v1.0.tar.gz"
+                touch draino_v1.0.tar.gz
                 for i in *.gz; do
                     [ -f "$i" ] || break
                     echo upload /baremetal/valuepacks/${ERIKUBE_TAG%%-*} $i
