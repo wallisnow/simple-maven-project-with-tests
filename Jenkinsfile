@@ -110,7 +110,7 @@ pipeline {
                 script {
                     commonMethod = load "${COMMON_METHODS}"
                     commonMethod.test()
-                    commonMethod.generateImageNames(1, 'MINUTES', images)
+                    commonMethod.generateImageNames(1, 'MINUTES', images, log)
                 }
             }
         }

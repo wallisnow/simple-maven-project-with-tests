@@ -30,7 +30,7 @@ def runStage(
     }
 }
 
-void generateImageNames(int stageTimeout, String timeoutUnits = 'MINUTES', Map image_types) {
+void generateImageNames(int stageTimeout, String timeoutUnits = 'MINUTES', Map image_types, log) {
     String stageName = "Generate image names"
     def stageAction = {
         //def log = load "cicd/jenkins/job-dsl/groovy/logs.groovy"
