@@ -12,7 +12,11 @@ pipeline {
 
     stages {
         stage('init'){
-            load "${ENV}"
+            steps{
+                sh 'load env'
+                load "${ENV}"
+                sh 'echo ${COMMON_METHODS}'
+            }
         }
         stage('Build') {
             steps {
