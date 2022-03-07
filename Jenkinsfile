@@ -92,8 +92,12 @@ pipeline {
             }
         }
         stage('load script'){
-            commonMethod = load "${COMMON_METHODS}"
-            commonMethod.test()
+            steps{
+                script {
+                    commonMethod = load "${COMMON_METHODS}"
+                    commonMethod.test()
+                }
+            }
         }
         stage('Result') {
             steps {
