@@ -1,7 +1,7 @@
 import hudson.model.*
 
 def FAILED_STAGE
-def ENV = "env.groovy"
+def ENV = "${workspace}/env.groovy"
 
 pipeline {
     agent { label "master" }
@@ -13,7 +13,8 @@ pipeline {
     stages {
         stage('init'){
             steps{
-                sh 'load env'
+                sh 'pwd'
+                sh 'ls'
                 load "${ENV}"
                 sh 'echo ${COMMON_METHODS}'
             }
