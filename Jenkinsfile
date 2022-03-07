@@ -1,7 +1,8 @@
 import hudson.model.*
 
 def FAILED_STAGE
-def ENV = "${workspace}/env.groovy"
+def rootDir = pwd()
+def ENV = "${rootDir}/env.groovy"
 
 pipeline {
     agent { label "master" }
