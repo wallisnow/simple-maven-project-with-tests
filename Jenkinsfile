@@ -1,6 +1,8 @@
 import hudson.model.*
 
 def FAILED_STAGE
+def rootDir
+def ENV
 
 pipeline {
     agent { label "master" }
@@ -12,8 +14,8 @@ pipeline {
     stages {
         stage('init'){
             steps{
-                def rootDir = pwd()
-                def ENV = "${rootDir}/env.groovy"
+                rootDir = pwd()
+                ENV = "${rootDir}/env.groovy"
                 sh 'pwd'
                 sh 'ls'
                 load "${ENV}"
