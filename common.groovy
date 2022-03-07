@@ -34,7 +34,7 @@ void generateImageNames(int stageTimeout, String timeoutUnits = 'MINUTES', Map i
     String stageName = "Generate image names"
     def stageAction = {
         //def log = load "cicd/jenkins/job-dsl/groovy/logs.groovy"
-        //def summary = createSummary(icon: 'package.png', text: "Image names:<br>")
+        def summary = createSummary(icon: 'package.png', text: "Image names:<br>")
         // Get the list of OpenStack images, and use it as a List
         List os_images = []
 //        withCredentials([
@@ -88,6 +88,7 @@ void generateImageNames(int stageTimeout, String timeoutUnits = 'MINUTES', Map i
             // Write to file that will be uploaded to artifactory
             sh("echo ${type}_image_name=${data.image_name} >> ${VARIABLE_FILE}")
             log.echoWithColor("blue", "${type}_image_name=${data.image_name}")
+            sh("echo ${log.getClass()}")
             summary.appendText("${type}_image_name=${data.image_name}<br>")
         }
     }
