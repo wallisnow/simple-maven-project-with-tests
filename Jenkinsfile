@@ -74,7 +74,7 @@ pipeline {
 //                    '''.stripIndent()
                     sh '''
                       rm -rf ${TEST_FILE}
-                      echo "AAAAAAA" >> ${TEST_FILE}
+                      echo "MY_TEST_BADGE" >> ${TEST_FILE}
                       cat ${TEST_FILE}
                       '''.stripIndent()
 

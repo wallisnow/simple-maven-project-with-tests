@@ -75,6 +75,7 @@ void generateImageNames(int stageTimeout, String timeoutUnits = 'MINUTES', Map i
 //                            "${type}-image-${erikube_tag}-${env.BUILD_NUMBER}-${env.HOST_IMAGE_TYPE}"
 //                } else {
                     // patchset job image name
+                    String safe_refspec = "1234567"
                     data.image_name =
                             "${safe_refspec}-${type}-image-${erikube_tag}-${env.BUILD_NUMBER}-${env.HOST_IMAGE_TYPE}"
 //                }
