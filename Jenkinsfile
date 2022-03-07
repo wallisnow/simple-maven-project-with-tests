@@ -1,6 +1,7 @@
 import hudson.model.*
 
 def FAILED_STAGE
+def ENV = "env.groovy"
 
 pipeline {
     agent { label "master" }
@@ -10,8 +11,12 @@ pipeline {
     }
 
     stages {
+        stage('init'){
+            load "${ENV}"
+        }
         stage('Build') {
             steps {
+
                 script {
                     FAILED_STAGE = env.STAGE_NAME
                 }
@@ -19,7 +24,7 @@ pipeline {
                 sh "printenv"
                 sh 'echo "Hello World 1"'
                 sh '''
-                    echo "Multiline shell steps works too"
+                    echo "Multiline shell steps works too "
                     ls -lah
                 '''
                 //sh "mvn -Dmaven.test.failure.ignore=true clean package"
@@ -81,6 +86,10 @@ pipeline {
                     }
                 }
             }
+        }
+        stage('load script'){
+            commonMethod = load "${COMMON_METHODS}"
+            commonMethod.test()
         }
         stage('Result') {
             steps {
