@@ -3,6 +3,7 @@ import hudson.model.*
 def FAILED_STAGE
 def rootDir
 def ENV
+def log
 
 Map<String, Map> images = [
         'capo_ephemeral': [:],
@@ -22,6 +23,8 @@ pipeline {
                 script {
                     rootDir = pwd()
                     ENV = "${rootDir}/env.groovy"
+                    // ${rootDir} is same as ${WORKSPACE}
+                    log = load "${WORKSPACE}/logs.groovy"
                 }
                 sh 'pwd'
                 sh 'ls'
