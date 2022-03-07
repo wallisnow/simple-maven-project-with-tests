@@ -20,8 +20,8 @@ pipeline {
     }
 
     stages {
-        stage('init'){
-            steps{
+        stage('init') {
+            steps {
                 script {
                     rootDir = pwd()
                     ENV = "${rootDir}/env.groovy"
@@ -107,12 +107,13 @@ pipeline {
                 }
             }
         }
-        stage('load script'){
-            steps{
+        stage('test mock build image') {
+            steps {
                 script {
                     commonK8sMethod = load "${K8S_COMMON_METHODS}"
                     commonK8sMethod.test()
                     commonK8sMethod.generateImageNames(1, 'MINUTES', images, log)
+                    commonK8sMethod.buildSourceCode(3, 'HOURS')
                 }
             }
         }
