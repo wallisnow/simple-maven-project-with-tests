@@ -1,7 +1,6 @@
 import hudson.model.*
 
 //use GIT to mock gerrit
-def GERRIT_REFSPEC = env.GIT_COMMIT
 def FAILED_STAGE
 def rootDir
 def ENV
@@ -109,6 +108,9 @@ pipeline {
         }
         stage('test mock build image') {
             steps {
+                withEnv(["GERRIT_REFSPEC=${env.GIT_COMMIT}"]) { // it can override any env variable
+                    echo "MY_ENV = ${env.MY_ENV}"
+                }
                 script {
                     commonK8sMethod = load "${K8S_COMMON_METHODS}"
                     commonK8sMethod.test()
