@@ -1,5 +1,7 @@
 import hudson.model.*
 
+//use GIT to mock gerrit
+def GERRIT_REFSPEC = env.GIT_COMMIT
 def FAILED_STAGE
 def rootDir
 def ENV
@@ -29,7 +31,7 @@ pipeline {
                 sh 'pwd'
                 sh 'ls'
                 load "${ENV}"
-                sh 'echo ${COMMON_METHODS}'
+                sh 'echo ${K8S_COMMON_METHODS}'
             }
         }
         stage('Build') {
@@ -108,9 +110,9 @@ pipeline {
         stage('load script'){
             steps{
                 script {
-                    commonMethod = load "${COMMON_METHODS}"
-                    commonMethod.test()
-                    commonMethod.generateImageNames(1, 'MINUTES', images, log)
+                    commonK8sMethod = load "${K8S_COMMON_METHODS}"
+                    commonK8sMethod.test()
+                    commonK8sMethod.generateImageNames(1, 'MINUTES', images, log)
                 }
             }
         }

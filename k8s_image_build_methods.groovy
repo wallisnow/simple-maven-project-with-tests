@@ -30,6 +30,52 @@ def runStage(
     }
 }
 
+void buildSourceCode(int stageTimeout, String timeoutUnits='MINUTES') {
+    String stageName = "Build source code"
+    def stageAction = {
+        String buildDecisionCmd = '''\
+        #!/bin/bash -xe
+        source common/utils/erikube-tag.sh
+        #creds="--netrc-file /home/jenkins/sdnrad.creds"
+        # Artifactory rest api:
+         url="https://arm.rnd.ki.sw.ericsson.se/artifactory/api/storage"
+         url="${url}/proj-erikube-generic-local/erikube/build/gic-build-v4/"
+         url="${url}/${ERIKUBE_VERSION}/${ERIKUBE_TAG}/eccd-${ERIKUBE_TAG}-x86_64.tgz"
+
+        eccd_release_tarball_uri=$(curl -s ${creds} ${url} | jq .uri)
+        rm -rf tmp_build_decision
+        if [ -z ${eccd_release_tarball_uri} ] || \
+           [ ${eccd_release_tarball_uri} == "null" ]; then
+            echo "ECCD release tarball does not exist in artifactory. Need to build source code"
+            echo "trigger"
+        else
+            echo "ECCD release tarball already exist in artifactory. No need to build again"
+            echo "skip"
+        fi
+       '''.stripIndent()
+
+        String buildDecision = sh(returnStdout: true, script: buildDecisionCmd).trim()
+
+        if (buildDecision =~ '.*trigger.*') {
+//            if (env.GERRIT_EVENT_TYPE && env.GERRIT_EVENT_TYPE.contains('change-merged') ||
+//                    env.GERRIT_REFSPEC.contains("refs/heads")) {
+//                build job: 'mock-eccd-build-scheduler-v4',
+//                        parameters: [string(name: 'GERRIT_REFSPEC',value: "${GERRIT_REFSPEC}"),
+//                                     string(name: 'RELEASE_LATEST', value: "true")]
+//            }
+//            else {
+//                build job: 'mock-eccd-build-scheduler-v4',
+//                        parameters: [string(name: 'GERRIT_REFSPEC',value: "${GERRIT_REFSPEC}"),
+//                                     string(name: 'DONOT_BUILD_TAR_BALL', value: 'true')]
+//            }
+            build job: 'mock-eccd-build-scheduler-v4',
+                    parameters: [string(name: 'GERRIT_REFSPEC', value: "${GERRIT_REFSPEC}"),
+                                 string(name: 'DONOT_BUILD_TAR_BALL', value: 'true')]
+        }
+    }
+    runStage(stageName, stageTimeout, timeoutUnits, stageAction)
+}
+
 void generateImageNames(int stageTimeout, String timeoutUnits = 'MINUTES', Map image_types, log) {
     String stageName = "Generate image names"
     def stageAction = {
@@ -88,7 +134,7 @@ void generateImageNames(int stageTimeout, String timeoutUnits = 'MINUTES', Map i
             // Write to file that will be uploaded to artifactory
             sh("echo ${type}_image_name=${data.image_name} >> ${VARIABLE_FILE}")
             log.echoWithColor("blue", "${type}_image_name=${data.image_name}")
-            sh("echo ${log.getClass()}")
+            sh("echo log type is : ${log.getClass()}")
             summary.appendText("${type}_image_name=${data.image_name}<br>")
         }
     }
