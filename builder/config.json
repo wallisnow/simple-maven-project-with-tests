@@ -1,0 +1,32 @@
+{
+  "master_data_file": "build/container-list-v5.json",
+  "target_build_dir": "tmp/eccd",
+  "artifactory_config":{
+    "url": "arm.rnd.ki.sw.ericsson.se",
+    "project" : "proj-erikube-generic-local",
+    "retry_count": 10
+  },
+  "armdocker_config":{
+    "url": "armdocker.rnd.ericsson.se",
+    "project" : "proj_kds/erikube"
+  },
+  "component_builder_config": {
+    "component_path": "components-v5",
+    "build_path": "erikube/build/build-v5"
+  },
+  "container_client_config": {
+    "insecure_policy": true,
+    "cache_path_art": "erikube/build/build-v5/cache"
+  },
+  "tar_client_config": {
+    "tar_path": "erikube/build/build-v5",
+    "tar_postfix": "x86_64.tgz",
+    "tar_prefix": "eccd",
+    "helm_charts_source": "helm-charts",
+    "helm_charts_target": "ansible/erikube/helm-charts",
+    "helm_search_pattern": "*.tgz",
+    "tar_target_location": "tmp"
+  },
+  "helm_client_config": {},
+  "make_client_config": {}
+}

@@ -115,6 +115,9 @@ pipeline {
                     commonK8sMethod.buildSourceCode(3, 'HOURS')
                     commonK8sMethod.fetchContainerList(10, 'MINUTES')
                     commonK8sMethod.buildBaseImageIfNeeded(40, 'MINUTES')
+
+                    caop = load "${CAPO_COMMON_METHODS}"
+                    capo.buildValuePackage(30, 'MINUTES')
                 }
             }
         }
