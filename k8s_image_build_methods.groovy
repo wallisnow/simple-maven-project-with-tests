@@ -166,11 +166,6 @@ void buildBaseImageIfNeeded(int stageTimeout, String timeoutUnits='MINUTES') {
            '''.stripIndent()
     }
     def catchAction = {}
-    if (env.OS_AUTH_URL.contains("serodc92ceenbi")) {
-        catchAction = {
-            removeResources()
-        }
-    }
     runStage(stageName, stageTimeout, timeoutUnits, stageAction, catchAction)
 }
 
