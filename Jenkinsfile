@@ -14,8 +14,10 @@ pipeline {
     stages {
         stage('init'){
             steps{
-                rootDir = pwd()
-                ENV = "${rootDir}/env.groovy"
+                script {
+                    rootDir = pwd()
+                    ENV = "${rootDir}/env.groovy"
+                }
                 sh 'pwd'
                 sh 'ls'
                 load "${ENV}"
