@@ -4,6 +4,11 @@ def FAILED_STAGE
 def rootDir
 def ENV
 
+Map<String, Map> images = [
+        'capo_ephemeral': [:],
+        'capo_node'     : [:]
+]
+
 pipeline {
     agent { label "master" }
     //checkout scm
