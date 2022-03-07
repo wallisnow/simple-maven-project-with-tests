@@ -41,11 +41,12 @@ void buildValuePackage(int stageTimeout, String timeoutUnits='MINUTES')
             // The script saves a JSON list to BM_VALUEPACK_JSON
             sh '''#!/bin/bash -xe
                 echo "${WORKSPACE}/builder/value_packs.py  build  --container-list container-list.json  >> ${CAPO_VALUEPACK_JSON}"
+                echo ["CXP9039695-2.22.0-945602b19d3967ad2ce3c8f78b87ccbe.tar.gz", "CXP9039691-2.22.0-f925aff19cbeeecc00926535e1ec3ad8.tar.gz", "CXP9042262-2.22.0-c3f5ac47956afba884095fea78b743d3.tar.gz", "CXP9042308-2.22.0-f3937ab21b3b6d0763bb8ba5fa261234.tar.gz"] >> ${CAPO_VALUEPACK_JSON}
                 echo "create draino_v1.0.tar.gz"
                 touch draino_v1.0.tar.gz
                 for i in *.gz; do
                     [ -f "$i" ] || break
-                    echo "upload /baremetal/valuepacks/${ERIKUBE_TAG%%-*} $i"
+                    echo "upload /capo/valuepacks/${ERIKUBE_TAG%%-*} $i"
                 done
                 '''.stripIndent()
             ccd_rel_version = env.ERIKUBE_TAG.split("-")[0]
