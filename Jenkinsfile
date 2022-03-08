@@ -13,6 +13,11 @@ Map<String, Map> images = [
         'capo_node'     : [:]
 ]
 
+Map<String, Map> disks = [
+        'ephemeral': null,
+        'node'     : null
+]
+
 pipeline {
     agent { label "master" }
     //checkout scm
