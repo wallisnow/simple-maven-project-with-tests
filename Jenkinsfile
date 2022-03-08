@@ -5,6 +5,8 @@ def FAILED_STAGE
 def rootDir
 def ENV
 def log
+def BUILD_ENV
+
 
 Map<String, Map> images = [
         'capo_ephemeral': [:],
@@ -29,6 +31,7 @@ pipeline {
                 }
                 sh 'pwd'
                 sh 'ls'
+                load "${K8S_BUILDER_ENV}"
                 load "${ENV}"
                 sh 'echo ${K8S_COMMON_METHODS}'
             }
