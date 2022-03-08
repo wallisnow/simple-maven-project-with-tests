@@ -216,9 +216,10 @@ String buildImage(String image_type, Map image_data, String flavor = "") {
 
             String container_name = generateContainerName(image_type)
 
-            sh("""
+            sh('''
             #!/bin/bash
-            set -euo pipefail
+            #set -euo pipefail
+            set -xe
             IFS=\$'\\n\\t'
 
             source \${WORKSPACE}/common/utils/kube-tag.sh
@@ -268,7 +269,7 @@ String buildImage(String image_type, Map image_data, String flavor = "") {
             echo run make print-variables
             echo run make run
 
-            """.stripIndent())
+            '''.stripIndent())
 //        }
 //        withCredentials([
 //                usernamePassword(credentialsId: "$JENKINS_OS_UPGRADE_CREDENTIAL_ID",
@@ -280,7 +281,7 @@ String buildImage(String image_type, Map image_data, String flavor = "") {
 //                string(credentialsId: '76d8b7a5-3cb6-498b-9369-c78b3bc353f3',
 //                        variable: 'SLES_REG_CODE')
 //        ]) {
-            sh("""
+            sh('''
             #!/bin/bash
 
             echo if "OS_AUTH_URL" = *"serodc92ceenbi"*
@@ -288,7 +289,7 @@ String buildImage(String image_type, Map image_data, String flavor = "") {
                 #UUID is needed because there mght be more images with same name in public
                 #images project
              echo "Image is moved from builder project to public-images-project"
-            """.stripIndent())
+            '''.stripIndent())
        // }
     }
     return image_data.image_name
