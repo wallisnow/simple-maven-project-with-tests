@@ -252,8 +252,8 @@ String buildImage(String image_type, Map image_data, String flavor = "") {
             #    export OS_SOURCE_IMAGE_NAME="SLES_15_SP2_IBD_BASE_IMAGE_\${GERRIT_BRANCH##*/}"
             #fi
             echo "set OS_SOURCE_IMAGE_NAME"
-            export OS_SOURCE_IMAGE_NAME="base-image-\\${ERIKUBE_TAG}-\\${HOST_IMAGE_TYPE}"
-            export OS_TARGET_IMAGE_NAME="${image_data.image_name}"
+            export OS_SOURCE_IMAGE_NAME="base-image-\\$(ERIKUBE_TAG)-\\$(HOST_IMAGE_TYPE)"
+            export OS_TARGET_IMAGE_NAME="$(image_data.image_name)"
             echo "OS_TARGET_IMAGE_NAME=\${OS_TARGET_IMAGE_NAME}" |tee target_image.txt
             export ECCD_RELEASE_NUMBER="\${ERIKUBE_TAG}"
             export CONTAINER_NAME="${container_name}"
