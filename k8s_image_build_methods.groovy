@@ -258,13 +258,13 @@ String buildImage(String image_type, Map image_data, String flavor = "") {
             export ECCD_RELEASE_NUMBER="\${ERIKUBE_TAG}"
             export CONTAINER_NAME="${container_name}"
             echo "CONTAINER_NAME="${container_name}""
-            if [[ "${OS_AUTH_URL}" = *"serodc92ceenbi"* ]]; then
-                export SHELL_CMD='/bin/sh -c "packer build image_build.json"'
-                export IMAGE_VISIBILITY="private"
-                export USE_BLOCKSTORAGE_VOLUME=true
-                export BLOCKSTORAGE_VOLUME_SIZE=16
-                export OS_VOLUME_API_VERSION=3
-            fi
+            #if [[ "${OS_AUTH_URL}" = *"serodc92ceenbi"* ]]; then
+            #    export SHELL_CMD='/bin/sh -c "packer build image_build.json"'
+            #    export IMAGE_VISIBILITY="private"
+            #    export USE_BLOCKSTORAGE_VOLUME=true
+            #    export BLOCKSTORAGE_VOLUME_SIZE=16
+            #    export OS_VOLUME_API_VERSION=3
+            #fi
             echo run make print-variables
             echo run make run
 
@@ -283,11 +283,11 @@ String buildImage(String image_type, Map image_data, String flavor = "") {
             sh("""
             #!/bin/bash
 
-            if [[ "${OS_AUTH_URL}" = *"serodc92ceenbi"* ]]; then
+            echo if "OS_AUTH_URL" = *"serodc92ceenbi"*
                 #Image is moved from builder project to public-images-project
                 #UUID is needed because there mght be more images with same name in public
                 #images project
-                echo "Image is moved from builder project to public-images-project"
+             echo "Image is moved from builder project to public-images-project"
             """.stripIndent())
        // }
     }
