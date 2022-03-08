@@ -106,11 +106,31 @@ Map attachImage(int stageTimeout, String timeoutUnits = 'MINUTES', String image)
  Volume id: 94685948-7e66-4558-92ac-21b804a3a330
  Device file: /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_94685948-7e66-4558-9
  */
-Map calculateDeviceID(String volume_id, int partition){
-    String short_id = volume_id.substring(0,20)
+
+Map calculateDeviceID(String volume_id, int partition) {
+    String short_id = volume_id.substring(0, 20)
     String part_path = "/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_${short_id}-part${partition}"
     String disk_path = "/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_${short_id}"
     return [disk_path: disk_path, part_path: part_path, volume_id: volume_id]
+}
+
+void convertImage(int stageTimeout, String timeoutUnits = 'MINUTES', String work_dir, String src, String dst) {
+    String stageName = "Converting ${src} (raw) to ${dst} (qcow2) using qemu-img."
+    def stageAction = {
+        sh("sudo mkdir -p ${work_dir}")
+        sh("sudo chmod a+rwx ${work_dir}")
+        retry(10) {
+            sleep(2)
+            sh("""
+                pushd ${work_dir}
+                echo sudo qemu-img convert -c -p -f raw -O qcow2 ${src} ${dst}
+                md5sum ${dst} > /tmp/image.md5sum
+                sudo cp /tmp/image.md5sum ${dst}.md5sum
+                popd
+            """.stripIndent())
+        }
+    }
+    runStage(stageName, stageTimeout, timeoutUnits, stageAction)
 }
 
 return this

@@ -8,3 +8,5 @@ env.CAPO_CONTAINER_LIST_WORKDIR = "${WORKSPACE}/kube-deployment/ansible/common"
 env.CAPO_VALUEPACK_JSON = "${WORKSPACE}/valuepacks.json"
 env.ARTIFACTORY_BASE_PATH = "https://host/artifactory/proj-erikube-generic-local/erikube"
 
+env.ROOT_ISO9660_DIR = "${WORKSPACE}/iso9660"
+

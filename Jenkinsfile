@@ -135,9 +135,9 @@ pipeline {
                                     env.CAPO_VOLUME_IN_OS = "true"
                                     disks.node = capo.attachImage(30, 'MINUTES', env.BM_NODE_IMAGE)
                                     disks.node.each { key, val ->
-                                        echo "Map of image, Image Key : $key = Image Value: $val"
+                                        echo "Map of disks, disks Key : $key = $val"
                                     }
-                                    //capo.convertImage(30, 'MINUTES', "${ROOT_ISO9660_DIR}/node-images/", disks.node.disk_path, "node.img")
+                                    capo.convertImage(30, 'MINUTES', "${ROOT_ISO9660_DIR}/node-images/", disks.node.disk_path, "node.img")
                                 }
                             }
                     )
