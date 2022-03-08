@@ -169,4 +169,133 @@ void buildBaseImageIfNeeded(int stageTimeout, String timeoutUnits='MINUTES') {
     runStage(stageName, stageTimeout, timeoutUnits, stageAction, catchAction)
 }
 
+String buildImage(String image_type, Map image_data, String flavor = "") {
+    // If the image already exists, just activate it and return
+    if (image_data.available) {
+        echo("Image kind: ${image_type} already available.")
+        echo("${image_data.image_name}, set to activate state.")
+//        withCredentials([
+//                usernamePassword(
+//                        credentialsId: "$JENKINS_OS_CREDENTIAL_ID",
+//                        passwordVariable: "OS_PASSWORD",
+//                        usernameVariable: "OS_USERNAME"),
+//        ]){
+        echo("login with $JENKINS_OS_CREDENTIAL_ID, and proceed active the image:")
+        echo("execut cmd: \$ openstack image set ${image_data.image_name} --activate")
+//            if (env.OS_AUTH_URL.contains("serodc92ceenbi")) {
+                //public_images_project
+//                sh("OS_PROJECT_ID=6b5ad64040f9445db677e9f09d480952 openstack image set ${image_data.image_name} --activate")
+//            }
+//            else {
+//                sh("openstack image set ${image_data.image_name} --activate")
+//            }
+//        }
+//        sh("touch ${CICD_DIR}/image_build/vm-image-builder/${image_type}_packer.log}")
+        echo("touch ${WORKSPACE}/image_build/vm-image-builder/${image_type}_packer.log}")
+        echo("will reaturn: $image_data.image_name")
+        return image_data.image_name
+    }
+
+    // for some images, an specific flavor might be specified
+    // to be set, in case different needs are reequired
+    if (flavor.length() > 0){
+        env["OS_FLAVOR"] = flavor
+    }
+
+    dir("${WORKSPACE}/image_build/vm-image-builder") {
+//        withCredentials([
+//                usernamePassword(credentialsId: "$JENKINS_OS_CREDENTIAL_ID",
+//                        passwordVariable: "OS_PASSWORD",
+//                        usernameVariable: "OS_USERNAME"),
+//                usernamePassword(credentialsId: "$ARMDOCKER_CREDENTIAL_ID",
+//                        passwordVariable: "ARMDOCKER_PASSWORD",
+//                        usernameVariable: "ARMDOCKER_USERNAME"),
+//                string(credentialsId: '76d8b7a5-3cb6-498b-9369-c78b3bc353f3',
+//                        variable: 'SLES_REG_CODE')
+//        ]) {
+
+            String container_name = generateContainerName(image_type)
+
+            sh("""
+            #!/bin/bash
+            set -euo pipefail
+            IFS=\$'\\n\\t'
+
+            source \${WORKSPACE}/common/utils/kube-tag.sh
+
+            export IMAGE_TYPE="${image_type}"
+            echo "export IMAGE_TYPE="${image_type}"
+            export ANSIBLE_GROUPS="${image_type}"
+            echo ANSIBLE_GROUPS="${image_type}"
+            export PLAYBOOK_FILE="ansible_provisioner/${image_type}-image.yml"
+            echo PLAYBOOK_FILE="ansible_provisioner/${image_type}-image.yml"
+            export PACKER_LOG_PATH="${image_type}_packer.log"
+            echo PACKER_LOG_PATH="${image_type}_packer.log"
+            #export GERRIT_TRIGGERS_LIST=\$(cat ${WORKSPACE}/cicd/run-proposal/output.txt | tr "\\n" " ")
+            echo "No existing image, need to build new image"
+            if [[ "${image_type}" == "director" ]]; then
+                echo "Build helm charts first which is needed by ${image_type} image"
+                pushd "\${WORKSPACE}/helm-charts"
+                make
+                popd
+            fi
+            echo "Build ${image_type} image via packer"
+            #if  [[ \${GERRIT_EVENT_TYPE:-} != "change-merged" ]] &&
+            #    [[ \${GERRIT_EVENT_COMMENT_TEXT:-} == *"-all-image"* ||
+            #       \${GERRIT_TRIGGERS_LIST} == *"check-ibd-all-image"* ]]; then
+            #    # Gerrit comment text indicate to use custom base image.
+            #    # So use ECCD tag version base image
+            #    export OS_SOURCE_IMAGE_NAME="base-image-\${ERIKUBE_TAG}-\${HOST_IMAGE_TYPE}"
+            #else
+            #    # Use relative base image depends on patchset branch
+            #    export GERRIT_BRANCH="\${GERRIT_BRANCH//./_}"
+            #    export OS_SOURCE_IMAGE_NAME="SLES_15_SP2_IBD_BASE_IMAGE_\${GERRIT_BRANCH##*/}"
+            #fi
+            echo "set OS_SOURCE_IMAGE_NAME"
+            export OS_SOURCE_IMAGE_NAME="base-image-\\${ERIKUBE_TAG}-\\${HOST_IMAGE_TYPE}"
+            export OS_TARGET_IMAGE_NAME="${image_data.image_name}"
+            echo "OS_TARGET_IMAGE_NAME=\${OS_TARGET_IMAGE_NAME}" |tee target_image.txt
+            export ECCD_RELEASE_NUMBER="\${ERIKUBE_TAG}"
+            export CONTAINER_NAME="${container_name}"
+            echo "CONTAINER_NAME="${container_name}""
+            if [[ "${OS_AUTH_URL}" = *"serodc92ceenbi"* ]]; then
+                export SHELL_CMD='/bin/sh -c "packer build image_build.json"'
+                export IMAGE_VISIBILITY="private"
+                export USE_BLOCKSTORAGE_VOLUME=true
+                export BLOCKSTORAGE_VOLUME_SIZE=16
+                export OS_VOLUME_API_VERSION=3
+            fi
+            echo run make print-variables
+            echo run make run
+
+            """.stripIndent())
+//        }
+//        withCredentials([
+//                usernamePassword(credentialsId: "$JENKINS_OS_UPGRADE_CREDENTIAL_ID",
+//                        passwordVariable: "OS_PASSWORD",
+//                        usernameVariable: "OS_USERNAME"),
+//                usernamePassword(credentialsId: "$ARMDOCKER_CREDENTIAL_ID",
+//                        passwordVariable: "ARMDOCKER_PASSWORD",
+//                        usernameVariable: "ARMDOCKER_USERNAME"),
+//                string(credentialsId: '76d8b7a5-3cb6-498b-9369-c78b3bc353f3',
+//                        variable: 'SLES_REG_CODE')
+//        ]) {
+            sh("""
+            #!/bin/bash
+
+            if [[ "${OS_AUTH_URL}" = *"serodc92ceenbi"* ]]; then
+                #Image is moved from builder project to public-images-project
+                #UUID is needed because there mght be more images with same name in public
+                #images project
+                echo "Image is moved from builder project to public-images-project"
+            """.stripIndent())
+       // }
+    }
+    return image_data.image_name
+}
+
+String generateContainerName(String image_type) {
+    return "${image_type}-image-builder-${env.BUILD_NUMBER}-${env.GIT_COMMIT}".toString()
+}
+
 return this

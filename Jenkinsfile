@@ -118,6 +118,18 @@ pipeline {
 
                     capo = load "${CAPO_COMMON_METHODS}"
                     capo.buildValuePackage(30, 'MINUTES')
+
+                    parallel(
+                            'node': {
+                                script {
+                                    capo.buildCapoNodeImage(35, 'MINUTES', images, "${BUILD_METHODS}")
+                                    // If we are this far, try to remove potential volumes:
+                                    env.CAPO_VOLUME_IN_OS = "true"
+                                    disks.node = capo.attachImage(30, 'MINUTES', env.BM_NODE_IMAGE)
+                                    capo.convertImage(30, 'MINUTES', "${ROOT_ISO9660_DIR}/node-images/", disks.node.disk_path, "node.img")
+                                }
+                            }
+                    )
                 }
             }
         }

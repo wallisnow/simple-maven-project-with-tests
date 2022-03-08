@@ -59,4 +59,18 @@ void buildValuePackage(int stageTimeout, String timeoutUnits='MINUTES')
     runStage(stageName, stageTimeout, timeoutUnits, stageAction)
 }
 
+void buildCapoNodeImage(
+        int stageTimeout, String timeoutUnits='MINUTES', Map image_types, String buildMethods
+) {
+    run = load buildMethods
+    String stageName = "Build capo node image"
+    def stageAction = {
+        image_types.each { key, val ->
+            echo "Map of image, Image Key : $key = Image Value: $val"
+        }
+        env.BM_NODE_IMAGE = run.buildImage("capo_node", image_types.capo_node)
+    }
+    runStage(stageName, stageTimeout, timeoutUnits, stageAction)
+}
+
 return this
