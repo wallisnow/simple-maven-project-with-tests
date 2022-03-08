@@ -220,9 +220,9 @@ String buildImage(String image_type, Map image_data, String flavor = "") {
             #!/bin/bash
             #set -euo pipefail
             set -xe
-            IFS=\$'\\n\\t'
+            #IFS=$'nt'
 
-            source \${WORKSPACE}/common/utils/kube-tag.sh
+            source ${WORKSPACE}/common/utils/kube-tag.sh
 
             export IMAGE_TYPE="${image_type}"
             echo "export IMAGE_TYPE="${image_type}"
