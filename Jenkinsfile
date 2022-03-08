@@ -31,8 +31,8 @@ pipeline {
                 }
                 sh 'pwd'
                 sh 'ls'
-                load "${K8S_BUILDER_ENV}"
                 load "${ENV}"
+                load "${K8S_BUILDER_ENV}"
                 sh 'echo ${K8S_COMMON_METHODS}'
             }
         }
