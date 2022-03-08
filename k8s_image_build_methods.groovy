@@ -224,7 +224,7 @@ String buildImage(String image_type, Map image_data, String flavor = "") {
             . ${WORKSPACE}/common/utils/kube-tag.sh
 
             export IMAGE_TYPE="${image_type}"
-            echo "export IMAGE_TYPE="${image_type}"
+            echo "export IMAGE_TYPE="${image_type}""
             export ANSIBLE_GROUPS="${image_type}"
             echo ANSIBLE_GROUPS="${image_type}"
             export PLAYBOOK_FILE="ansible_provisioner/${image_type}-image.yml"
