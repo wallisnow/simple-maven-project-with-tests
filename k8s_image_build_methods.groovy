@@ -217,9 +217,8 @@ String buildImage(String image_type, Map image_data, String flavor = "") {
             String container_name = generateContainerName(image_type)
 
             sh('''
-            #!/bin/bash
+            #!/bin/bash -xe
             #set -euo pipefail
-            set -xe
             #IFS=$'nt'
 
             source ${WORKSPACE}/common/utils/kube-tag.sh
