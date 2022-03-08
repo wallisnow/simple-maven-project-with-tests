@@ -1,10 +1,8 @@
 import java.util.regex.*
-import groovy.json.JsonOutput
 
 def runStage(
-    String stageName, int stageTimeout, String timeoutUnits, Closure stageAction,
-    Closure catchAction={}, String buildResult='FAILURE', Closure finalAction={})
-{
+        String stageName, int stageTimeout, String timeoutUnits, Closure stageAction,
+        Closure catchAction = {}, String buildResult = 'FAILURE', Closure finalAction = {}) {
     def log = load "${WORKSPACE}/logs.groovy"
     wrap([$class: 'AnsiColorBuildWrapper', 'colorMapName': 'xterm']) {
         removeBadges()
@@ -14,7 +12,7 @@ def runStage(
         timeout(time: stageTimeout, unit: timeoutUnits) {
             try {
                 stageAction()
-            } catch(Exception e) {
+            } catch (Exception e) {
                 removeBadges()
                 log.addError("${stageName}")
                 log.echoWithColor("red", "catch: ${e}")
@@ -32,8 +30,7 @@ def runStage(
     }
 }
 
-void buildValuePackage(int stageTimeout, String timeoutUnits='MINUTES')
-{
+void buildValuePackage(int stageTimeout, String timeoutUnits = 'MINUTES') {
     String stageName = "Build Value Package"
     def stageAction = {
         dir(env.CAPO_CONTAINER_LIST_WORKDIR) {
@@ -60,7 +57,7 @@ void buildValuePackage(int stageTimeout, String timeoutUnits='MINUTES')
 }
 
 void buildCapoNodeImage(
-        int stageTimeout, String timeoutUnits='MINUTES', Map image_types, String buildMethods
+        int stageTimeout, String timeoutUnits = 'MINUTES', Map image_types, String buildMethods
 ) {
     run = load buildMethods
     String stageName = "Build capo node image"
@@ -71,6 +68,49 @@ void buildCapoNodeImage(
         env.BM_NODE_IMAGE = run.buildImage("capo_node", image_types.capo_node)
     }
     runStage(stageName, stageTimeout, timeoutUnits, stageAction)
+}
+
+Map attachImage(int stageTimeout, String timeoutUnits = 'MINUTES', String image) {
+    String stageName = "Attach image: ${image}"
+    Map device_paths
+    def stageAction = {
+        //String executor_id = sh(script: "cat /var/lib/cloud/data/instance-id", returnStdout: true).trim()
+        String executor_id = "9527"
+        String volume_name = "${image}_${BUILD_TAG}"
+        echo "Attaching ${image} to VM ${executor_id}"
+//        withCredentials([
+//                usernamePassword(credentialsId: "$JENKINS_OS_CREDENTIAL_ID",
+//                        passwordVariable: "OS_PASSWORD",
+//                        usernameVariable: "OS_USERNAME")]
+//        ){
+        String os_cmdline = "openstack volume create --size 15 --image ${image} ${volume_name} -f json"
+        def ret_createVol = sh(script: os_cmdline, returnStdout: true)
+        //Map volume_info = readJSON(text: ret_createVol)
+        Map volume_info = readJSON(text: '{ "id": "vol_id_99999999999999999999999999999999" }')
+        //Volume creation takes some time, retry until it works
+        retry(10) {
+            //sh("openstack server add volume ${executor_id} ${volume_info.id}")
+            sh("echo do openstack server add volume ${executor_id} ${volume_info.id}")
+        }
+        device_paths = calculateDeviceID(volume_info.id, 3)
+//        }
+    }
+    runStage(stageName, stageTimeout, timeoutUnits, stageAction)
+    return device_paths
+}
+
+/*
+ To have several jobs running on the same executor, predictable disk names are used.
+ OpenStack sets the SCSI ID of LUNs in a predictable way.
+ Example:
+ Volume id: 94685948-7e66-4558-92ac-21b804a3a330
+ Device file: /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_94685948-7e66-4558-9
+ */
+Map calculateDeviceID(String volume_id, int partition){
+    String short_id = volume_id.substring(0,20)
+    String part_path = "/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_${short_id}-part${partition}"
+    String disk_path = "/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_${short_id}"
+    return [disk_path: disk_path, part_path: part_path, volume_id: volume_id]
 }
 
 return this
