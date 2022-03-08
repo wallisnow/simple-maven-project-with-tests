@@ -83,7 +83,7 @@ Map attachImage(int stageTimeout, String timeoutUnits = 'MINUTES', String image)
 //                        passwordVariable: "OS_PASSWORD",
 //                        usernameVariable: "OS_USERNAME")]
 //        ){
-        String os_cmdline = "openstack volume create --size 15 --image ${image} ${volume_name} -f json"
+        String os_cmdline = "echo openstack volume create --size 15 --image ${image} ${volume_name} -f json"
         def ret_createVol = sh(script: os_cmdline, returnStdout: true)
         //Map volume_info = readJSON(text: ret_createVol)
         Map volume_info = readJSON(text: '{ "id": "vol_id_99999999999999999999999999999999" }')
