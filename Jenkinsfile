@@ -122,7 +122,7 @@ pipeline {
                     parallel(
                             'node': {
                                 script {
-                                    capo.buildCapoNodeImage(35, 'MINUTES', images, "${commonK8sMethod}")
+                                    capo.buildCapoNodeImage(35, 'MINUTES', images, "${K8S_COMMON_METHODS}")
                                     // If we are this far, try to remove potential volumes:
                                     env.CAPO_VOLUME_IN_OS = "true"
                                     //disks.node = capo.attachImage(30, 'MINUTES', env.BM_NODE_IMAGE)
