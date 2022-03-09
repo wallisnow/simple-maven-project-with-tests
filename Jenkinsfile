@@ -43,7 +43,7 @@ pipeline {
         }
         stage('Test run script') {
             steps {
-                String result = sh(returnStdout: true, script: './helloworld.sh').trim()
+                sh(returnStdout: true, script: './helloworld.sh').trim()
             }
         }
         stage('Build') {
