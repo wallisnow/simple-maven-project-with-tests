@@ -43,26 +43,16 @@ pipeline {
         }
         stage('Build') {
             steps {
-
-                script {
-                    FAILED_STAGE = env.STAGE_NAME
-                }
-                sh 'echo ${MY_ENV}'
-                sh "printenv"
-                sh 'echo "Hello World 1"'
-                sh '''
-                    echo "Multiline shell steps works too "
-                    ls -lah
-                '''
                 //sh "mvn -Dmaven.test.failure.ignore=true clean package"
                 withMaven(maven: 'M3') {
                     sh "mvn -Dmaven.test.failure.ignore=true clean package"
                 }
             }
         }
-        stage('set new env') {
+        stage('Test env') {
             steps {
                 script {
+                    FAILED_STAGE = env.STAGE_NAME
                     env.MY_NEW_ENV = "foo" // creates env.SOMETHING variable
                     env.MY_ENV = "bar"
                     sh "echo MY_NEW_ENV: ${MY_NEW_ENV}, MY_ENV: ${MY_ENV}"
@@ -70,10 +60,22 @@ pipeline {
                     sh "echo MY_NEW_ENV: ${MY_NEW_ENV}, MY_ENV: ${MY_ENV}"
                 }
 
-                withEnv(["MY_ENV=bar"]) { // it can override any env variable
+                withEnv(["MY_ENV=barrr"]) { // it can override any env variable
                     echo "MY_ENV = ${env.MY_ENV}"
                 }
 
+                sh 'echo ${MY_ENV}'
+                sh "printenv"
+                sh 'echo "Hello World 1"'
+                sh '''
+                    echo "Multiline shell steps works too "
+                    ls -lah
+                '''
+            }
+        }
+        stage('Test run script') {
+            steps {
+                sh('./hello.sh')
             }
         }
         stage("run robot ") {
