@@ -41,6 +41,11 @@ pipeline {
                 sh 'echo ${K8S_COMMON_METHODS}'
             }
         }
+        stage('Test run script') {
+            steps {
+                String result = sh(returnStdout: true, script: './helloworld.sh').trim()
+            }
+        }
         stage('Build') {
             steps {
                 //sh "mvn -Dmaven.test.failure.ignore=true clean package"
@@ -71,11 +76,6 @@ pipeline {
                     echo "Multiline shell steps works too "
                     ls -lah
                 '''
-            }
-        }
-        stage('Test run script') {
-            steps {
-                sh(script:'./helloworld.sh',returnStdout: true).trim()
             }
         }
         stage("run robot ") {
