@@ -75,7 +75,7 @@ pipeline {
         }
         stage('Test run script') {
             steps {
-                sh('./hello.sh')
+                sh(script:'./helloworld.sh',returnStdout: true).trim()
             }
         }
         stage("run robot ") {
