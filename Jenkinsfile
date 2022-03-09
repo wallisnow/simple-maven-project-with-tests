@@ -43,7 +43,7 @@ pipeline {
         }
         stage('Test run script') {
             steps {
-                hello=sh(returnStdout: true, script: './helloworld.sh').trim()
+                sh('./helloworld.sh')
             }
         }
         stage('Build') {
