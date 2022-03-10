@@ -46,7 +46,7 @@ pipeline {
                 sh('./helloworld.sh')
 
                 script {
-                    if(fileExists("/home/${USER}/.test"))
+                    if(fileExists("/home/abc"))
                     {
                         echo("test file/directory existance")
                     }
