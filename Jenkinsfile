@@ -143,6 +143,9 @@ pipeline {
                                 }
                             }
                     )
+
+                    env.IMAGE_PATH = ${TEST_FILE}
+                    echo ${IMAGE_PATH}
                 }
             }
         }
