@@ -44,6 +44,13 @@ pipeline {
         stage('Test run script') {
             steps {
                 sh('./helloworld.sh')
+
+                script {
+                    if(fileExists("/home/${USER}/.test"))
+                    {
+                        echo("test file/directory existance")
+                    }
+                }
             }
         }
         stage('Build') {
