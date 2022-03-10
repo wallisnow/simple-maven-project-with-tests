@@ -132,6 +132,7 @@ pipeline {
                     parallel(
                             'node': {
                                 script {
+                                    env.ENV_IN_PARALLEL = "parallel_env"
                                     capo.buildCapoNodeImage(35, 'MINUTES', images, "${K8S_COMMON_METHODS}")
                                     // If we are this far, try to remove potential volumes:
                                     env.CAPO_VOLUME_IN_OS = "true"
@@ -144,8 +145,8 @@ pipeline {
                             }
                     )
 
-                    env.IMAGE_PATH = ${TEST_FILE}
-                    echo ${IMAGE_PATH}
+                    env.TEST_ENV_IN_PARALLEL = ${ENV_IN_PARALLEL}
+                    echo "test set value after parallel: ${TEST_ENV_IN_PARALLEL}"
                 }
             }
         }
