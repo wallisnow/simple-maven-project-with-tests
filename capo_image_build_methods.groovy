@@ -117,15 +117,15 @@ Map calculateDeviceID(String volume_id, int partition) {
 void convertImage(int stageTimeout, String timeoutUnits = 'MINUTES', String work_dir, String src, String dst) {
     String stageName = "Converting ${src} (raw) to ${dst} (qcow2) using qemu-img."
     def stageAction = {
-        sh("sudo mkdir -p ${work_dir}")
-        sh("sudo chmod a+rwx ${work_dir}")
+        sh("mkdir -p ${work_dir}")
+        sh("chmod a+rwx ${work_dir}")
         retry(10) {
             sleep(2)
             sh("""
                 pushd ${work_dir}
                 echo sudo qemu-img convert -c -p -f raw -O qcow2 ${src} ${dst}
                 md5sum ${dst} > /tmp/image.md5sum
-                sudo cp /tmp/image.md5sum ${dst}.md5sum
+                cp /tmp/image.md5sum ${dst}.md5sum
                 popd
             """.stripIndent())
         }
