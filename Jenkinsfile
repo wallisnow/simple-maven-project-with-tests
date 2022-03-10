@@ -145,7 +145,7 @@ pipeline {
                             }
                     )
 
-                    env.TEST_ENV_IN_PARALLEL = ${ENV_IN_PARALLEL}
+                    env.TEST_ENV_IN_PARALLEL = "${ENV_IN_PARALLEL}"
                     echo "test set value after parallel: ${TEST_ENV_IN_PARALLEL}"
                 }
             }
